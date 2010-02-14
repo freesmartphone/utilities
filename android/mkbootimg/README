@@ -1,0 +1,4 @@
+mkbootimg is a tool to create bootable kernel / ramdisk images
+for sending via the android fastboot system to devices such as
+the HTC Dream (T-Mobile G1, ADP-1) and the HTC Magic.
+
