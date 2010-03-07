@@ -39,6 +39,10 @@ rootfs/armv7/.unpacked: doctors/webosdoctorp100ewwsprint-1.3.5.jar
 doctors/webosdoctorp100ewwsprint-1.3.5.jar:
 	mkdir -p doctors
 	wget -O $@ http://palm.cdnetworks.net/rom/pre/p135r0d12302009/sr1ntp135rod/webosdoctorp100ewwsprint.jar
+	
+.PHONY: install
+install:
+	
 
 .PHONY: clean
 clean:

@@ -1,6 +1,7 @@
-LIBS = $(shell grep /usr/lib ${IPKG_FILES_LIST})
 
-stage:: $(foreach LIB,${LIBS},${STAGING_DIR}${LIB})
+FILES = $(shell grep / ${IPKG_FILES_LIST})
+
+stage:: $(foreach FILE,${FILES},${STAGING_DIR}${FILE})
 
 ${STAGING_DIR}/% : ${ROOTFS_DIR}/%
 	mkdir -p $(@D)
@@ -8,4 +9,4 @@ ${STAGING_DIR}/% : ${ROOTFS_DIR}/%
 	cp -pR $< $@
 
 clobber::
-	rm -f $(foreach LIB,${LIBS},${STAGING_DIR}${LIB})
+	rm -f $(foreach FILE,${FILES},${STAGING_DIR}${FILE})
