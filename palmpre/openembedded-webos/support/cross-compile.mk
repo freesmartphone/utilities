@@ -1,0 +1,1 @@
+SB2 = sb2 -M ${MAPPING_FILE}
