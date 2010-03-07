@@ -25,7 +25,7 @@
 ** ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "sha.h"
+#include "mincrypt/sha.h"
 
 // Some machines lack byteswap.h and endian.h.  These have to use the
 // slower code, even if they're little-endian.
