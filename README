@@ -1,1 +1,10 @@
- 
+This repository contains utilities and helpers to facilitate
+the integration of the freesmartphone.org middleware to the
+so called anti-vendor-ports, that is devices which do not ship
+with a fully free system, such as
+
+ * Android
+ * Maemo
+ * WebOS
+ * MeeGo
+
