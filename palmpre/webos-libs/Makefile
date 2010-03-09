@@ -1,4 +1,4 @@
-DOCTORPRE  = webosdoctorp100ewwsprint-1.3.5.jar
+DOCTORPRE  = webosdoctorp100ewwsprint.jar
 ROOTDIR = /
 
 ifeq ($(shell uname -s),Darwin)
@@ -31,15 +31,15 @@ staging-%: staging/mapping-%
 staging/mapping-%:
 	mkdir -p staging/$*/usr
 
-rootfs/armv7/.unpacked: doctors/webosdoctorp100ewwsprint-1.3.5.jar
+rootfs/armv7/.unpacked: doctors/webosdoctorp100ueu-wr.jar
 	rm -rf rootfs/armv7
 	mkdir -p rootfs/armv7
 	${FAKEROOT} scripts/unpack-doctor-rootfs $< rootfs/armv7
 	touch $@
 	
-doctors/webosdoctorp100ewwsprint-1.3.5.jar:
-	mkdir -p doctors
-	wget -O $@ http://palm.cdnetworks.net/rom/pre/p135r0d12302009/sr1ntp135rod/webosdoctorp100ewwsprint.jar
+doctors/webosdoctorp100ueu-wr.jar:
+#	mkdir -p doctors
+#	wget -O $@ http://palm.cdnetworks.net/rom/pre/p135r0d12302009/sr1ntp135rod/webosdoctorp100ewwsprint.jar
 	
 .PHONY: create-install-script
 create-install-script: stage
@@ -53,6 +53,13 @@ install:
 	  fi; \
 	done
 
+.PHONY: install-libs
+install-libs:
+	for f in `find packages -mindepth 1 -maxdepth 1 -type d -print` ; do \
+	  if [ -e $$f/Makefile ]; then \
+	    ${MAKE} -C $$f ROOTDIR=$(ROOTDIR) install-libs || exit ; \
+	  fi; \
+	done
 
 .PHONY: clean
 clean:
