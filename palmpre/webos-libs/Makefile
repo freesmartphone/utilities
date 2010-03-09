@@ -41,6 +41,10 @@ doctors/webosdoctorp100ewwsprint-1.3.5.jar:
 	mkdir -p doctors
 	wget -O $@ http://palm.cdnetworks.net/rom/pre/p135r0d12302009/sr1ntp135rod/webosdoctorp100ewwsprint.jar
 	
+.PHONY: create-install-script
+create-install-script: stage
+	sh scripts/generate-libs-install-script
+
 .PHONY: install
 install: 
 	for f in `find packages -mindepth 1 -maxdepth 1 -type d -print` ; do \
@@ -48,7 +52,7 @@ install:
 	    ${MAKE} -C $$f ROOTDIR=$(ROOTDIR) install || exit ; \
 	  fi; \
 	done
-	
+
 
 .PHONY: clean
 clean:
