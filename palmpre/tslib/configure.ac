@@ -49,32 +49,6 @@ AC_FUNC_STAT
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([gettimeofday memmove memset munmap select strcasecmp strchr strdup strtoul])
 
-# filters
-TSLIB_CHECK_MODULE([linear], [yes], [Enable building of linear scaling])
-TSLIB_CHECK_MODULE([dejitter], [yes], [Enable building of dejitter filter])
-TSLIB_CHECK_MODULE([linear-h2200], [yes], [Enable building of linearizing filter for iPAQ h2200])
-TSLIB_CHECK_MODULE([variance], [yes], [Enable building of variance filter])
-TSLIB_CHECK_MODULE([pthres], [yes], [Enable building of pthres filter])
-
-# hardware access modules
-TSLIB_CHECK_MODULE([ucb1x00], [yes], [Enable building of ucb1x00 raw module (UCB1x00 support)])
-TSLIB_CHECK_MODULE([corgi], [yes], [Enable building of corgi raw module (Sharp Zaurus sl-c7x0 support)])
-TSLIB_CHECK_MODULE([collie], [yes], [Enable building of collie raw module (Sharp Zaurus sl-5500/5000d support)])
-TSLIB_CHECK_MODULE([h3600], [yes], [Enable building of h3600 raw module (HP iPaq H3600 support)])
-TSLIB_CHECK_MODULE([mk712], [yes], [Enable building of mk712 raw module (Hi tachi support)])
-TSLIB_CHECK_MODULE([arctic2], [yes], [Enable building of arctic2 raw module (IBM Arctic II support)])
-TSLIB_CHECK_MODULE([tatung], [yes], [Enable building of tatung raw module (Tatung Webpad support)])
-TSLIB_CHECK_MODULE([input], [yes], [Enable building of generic input raw module (Linux /dev/input/eventN support)])
-
-AC_MSG_CHECKING([where to place modules])
-AC_ARG_WITH(plugindir,
-        AS_HELP_STRING([--with-plugindir=ARG],
-                [Where to look for plugins (default=${libdir}/ts)]),
-        [PLUGIN_DIR=$withval],
-        [PLUGIN_DIR='${libdir}/ts'])
-AC_MSG_RESULT($PLUGIN_DIR)
-AC_SUBST(PLUGIN_DIR)
-
 AC_MSG_CHECKING([whether to enable debugging])
 AC_ARG_ENABLE(debug,
 	AS_HELP_STRING(--enable-debug
@@ -109,10 +83,7 @@ AC_SUBST(LT_REVISION)
 AC_SUBST(LT_AGE)
 
 AC_CONFIG_FILES([Makefile
-                 etc/Makefile
-                 plugins/Makefile
                  src/Makefile
-                 tests/Makefile
                  tslib.pc:tslib.pc.in
                  tslib-$LT_RELEASE.pc:tslib.pc.in])
 AC_OUTPUT
