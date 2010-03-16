@@ -41,6 +41,9 @@ extern "C" {
 struct tsdev;
 
 struct ts_sample {
+#ifdef TSLIB_MULTITOUCH
+	int id;
+#endif
 	int		x;
 	int		y;
 	unsigned int	pressure;

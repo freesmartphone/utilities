@@ -5,7 +5,6 @@ AC_PREREQ(2.57)
 AC_INIT(tslib, 1.0.0, kergoth@handhelds.org)
 # AC_CONFIG_AUX_DIR(config)
 AM_INIT_AUTOMAKE(dist-bzip2)
-AC_CONFIG_SRCDIR([src/ts_close.c])
 AM_CONFIG_HEADER(config.h)
 
 PACKAGE_DESCRIPTION="Touchscreen Access Library"
