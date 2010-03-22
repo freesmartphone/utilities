@@ -19,79 +19,123 @@
 
 using Gee;
 
-static Preboot preboot = null;
-
-public class BootConfiguration 
-{
-    private string _title;
-    private string _kernel_name;
-    private string _kernel_cmdline;
-    
-    public BootConfiguration()
-    {
-    }
+namespace preboot {
+	
+public class BootConfiguration {
+	public string title { get; set; }
+	public string description { get; set; }
+	public string kernel { get; set; }
+	public string root_fs { get; set; }
+	public string image_path { get; set; }
 }
 
-public class Preboot
-{
-    private Evas.Canvas _evas;
-    private EcoreEvas.Window _window;
-    private string _theme_path;
-    private Edje.Object _mainmenu;
-    
-    public Evas.Canvas evas {
-        get { return evas; }
-    }
-    
-    public EcoreEvas.Window window {
-        get { return _window; }
-    }
-    
-    public string theme_path {
-        get { return _theme_path; }
-    }
-    
-    private void read_configuration()
-    {
-        FsoFramework.SmartKeyFile key_file = new FsoFramework.SmartKeyFile();
-        /* FIXME read configuration */
-    }
-    
-    public Preboot() {
-        _theme_path = Config.PACKAGE_DATADIR + "/themes/default.edj";
-        FsoFramework.theLogger.info(@"using '$(_theme_path)' as theme");
+public class MainView {
+	private Evas.Canvas _evas;
+	private EcoreEvas.Window _window;
+	private Edje.Object _mainmenu;
 
-        /* create a window */
-        _window = new EcoreEvas.Window( "software_x11", 0, 0, 320, 480, null );
-        window.title_set( "preboot" );
-        window.show();
-        _evas = window.evas_get();
-        
-        /* create our main menu edje object */
-        _mainmenu = new Edje.Object( _evas );
-        _mainmenu.file_set( _theme_path, "mainmenu" );
-        _mainmenu.resize( 320, 480 );
-        _mainmenu.layer_set( 0 );
-        _mainmenu.show();
-    }
+	public Evas.Canvas evas {
+		get { return evas; }
+	}
+	
+	public EcoreEvas.Window window {
+		get { return _window; }
+	}
+    
+	public string theme_path {
+		get { return _theme_path; }
+	}
+    
+	public MainController controller {
+		get; set;
+	}
+
+	public MainView() {
+		
+		FsoFramework.theLogger.info(@"using '$(_theme_path)' as theme");
+	}
+
+	public void create() {
+		 /* create a window */
+		_window = new EcoreEvas.Window( "software_x11", 0, 0, 320, 480, null );
+		window.title_set( "preboot" );
+		window.show();
+		_evas = window.evas_get();
+		
+		/* create our main menu edje object */
+		_mainmenu = new Edje.Object( _evas );
+		_mainmenu.file_set( _controller.themePath, "mainmenu" );
+		_mainmenu.resize( 320, 480 );
+		_mainmenu.layer_set( 0 );
+		_mainmenu.show();
+	}
+	
+	public void bindBootConfiguration(GLib.List<BootConfiguration> bootConigurations) {
+	}
 }
 
-public static int main( string[] args)
-{
-	/* init */
-	Ecore.init();
-	EcoreEvas.init();
-	Edje.init();
+public class MainController {
+	private MainView _mainView;
+	private string _themePath;
+	private string _configPath;
+	
+	public string themePath {
+		get { return _themePath; }
+	}
+	
+	public MainController() {
+		_mainView = new MainView();
+		_mainView.controller = this;
+		
+		_themePath = Config.PACKAGE_DATADIR + "/themes/default.edj";
+		_configPath = "/etc/preboot.conf";
+	}
+	
+	public void loadConfiguration() {
+		FsoFramework.SmartKeyFile sf = new FsoFramework.SmartKeyFile();
+		GLib.List<BootConfiguration> configurations = new GLib.List<BootConfiguration>();
+		if (!sf.loadFromFile(_configPath)) {
+			var sections = sf.sectionsWithPrefix("boot.");
+			foreach(var section in sections) {
+				BootConfiguration bootConfig = new BootConfiguration();
+				bootConfig.name = sf.stringValue(section, "title", "<unknown>");
+				bootConfig.description = sf.stringValue(section, "description", "");
+				bootConfig.kernel = sf.stringValue(section, "kernel", "");
+				bootConfig.root_fs = sf.stringValue(section, "root_fs", "");
+				bootConfig.image_path = sf.stringValue(section, "image_path", "");
+				configuratons.add(bootConfig);
+			}
+		}
+		_mainView.bindBootConfiguration(configurations);
+	}
+	
+	public void init() {
+		Ecore.init();
+		EcoreEvas.init();
+		Edje.init();
+		
+		_mainView.create();
+	}
+	
+	public void run() {
+		message( "-> mainloop" );
+		Ecore.MainLoop.begin();
+		message( "<- mainloop" );
+	}
+	
+	public void shutdown() {
+		/* shutdown */
+		Edje.shutdown();
+		EcoreEvas.shutdown();
+	}
+}
 
-	preboot = new Preboot();
-
-	message( "-> mainloop" );
-	Ecore.MainLoop.begin();
-	message( "<- mainloop" );
-
-	/* shutdown */
-	Edje.shutdown();
-	EcoreEvas.shutdown();
-
+public static int main( string[] args) {
+	var controller = new MainController();
+	controller.init();
+	controller.run();
+	controller.shutdown();
 	return 0;
 }
+
+} // namespace
