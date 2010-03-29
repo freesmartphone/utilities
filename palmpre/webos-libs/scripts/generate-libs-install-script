@@ -5,7 +5,14 @@ echo "#!/bin/sh" > webos-libs-install.sh
 echo "FSO_ROOTFS=\$1" >> webos-libs-install.sh
 echo "" >> webos-libs-install.sh
 echo "FILES=\" \ " >> webos-libs-install.sh
+# add all libs
 for f in `find staging/armv7 -type f -print` ; do 
+	echo -n `echo $f | sed 's/staging\/armv7//'` >> webos-libs-install.sh
+	echo " \\ " >> webos-libs-install.sh
+done
+# even add symbolic links for this libs!
+for f in `find staging/armv7 -type l -print` ; do 
+	echo $f
 	echo -n `echo $f | sed 's/staging\/armv7//'` >> webos-libs-install.sh
 	echo " \\ " >> webos-libs-install.sh
 done

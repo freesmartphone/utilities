@@ -1,5 +1,6 @@
 DOCTORPRE  = webosdoctorp100ewwsprint.jar
 ROOTDIR = /
+LIBDIR = /usr/lib
 
 ifeq ($(shell uname -s),Darwin)
 TAR	 = gnutar
@@ -57,7 +58,7 @@ install:
 install-libs:
 	for f in `find packages -mindepth 1 -maxdepth 1 -type d -print` ; do \
 	  if [ -e $$f/Makefile ]; then \
-	    ${MAKE} -C $$f ROOTDIR=$(ROOTDIR) install-libs || exit ; \
+	    ${MAKE} -C $$f LIBDIR=$(LIBDIR) install-libs || exit ; \
 	  fi; \
 	done
 
