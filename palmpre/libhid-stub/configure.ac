@@ -1,0 +1,15 @@
+AC_PREREQ(2.57)
+AC_INIT(libhid-stub, 1.0.0, morphis@gravedo.de)
+# AC_CONFIG_AUX_DIR(config)
+AM_INIT_AUTOMAKE(dist-bzip2)
+AM_CONFIG_HEADER(config.h)
+
+PACKAGE_DESCRIPTION=""
+AC_SUBST(PACKAGE_DESCRIPTION)
+
+AC_PROG_CC
+AC_PROG_LIBTOOL
+
+AC_CONFIG_FILES([Makefile
+                 src/Makefile])
+AC_OUTPUT
