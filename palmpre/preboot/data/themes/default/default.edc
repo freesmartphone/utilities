@@ -22,7 +22,7 @@ collections {
                     }
                 }
             }
-            path {
+            part {
 				name: "configuration_list";
 				type: SWALLOW;
 				mouse_events: 1;

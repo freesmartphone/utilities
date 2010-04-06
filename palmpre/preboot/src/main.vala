@@ -27,12 +27,14 @@ public class BootConfiguration {
 	public string kernel { get; set; }
 	public string root_fs { get; set; }
 	public string image_path { get; set; }
+	public string name { get; set; }
 }
 
 public class MainView {
 	private Evas.Canvas _evas;
 	private EcoreEvas.Window _window;
 	private Edje.Object _mainmenu;
+	private string _theme_path;
 
 	public Evas.Canvas evas {
 		get { return evas; }
@@ -78,6 +80,7 @@ public class MainController {
 	private MainView _mainView;
 	private string _themePath;
 	private string _configPath;
+	private Gee.AbstractList<BootConfiguration> configuratons = new Gee.ArrayList<BootConfiguration>();
 	
 	public string themePath {
 		get { return _themePath; }
