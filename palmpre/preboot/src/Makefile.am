@@ -11,7 +11,7 @@ VALAC_ARGS = \
 	--vapidir ../vapi \
 	--pkg config \
 	--pkg gio-2.0 \
-	--pkg fsoframework-2.0 \
+	--pkg fsobasics-2.0 \
 	--pkg evas \
 	--pkg ecore \
 	--pkg edje \
