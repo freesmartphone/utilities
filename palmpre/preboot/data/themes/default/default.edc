@@ -1,44 +1,1097 @@
+externals {
+   external: "elm";
+}
 
 collections {
-    group {
-        min: 480 640;
-        max: 480 640;
-        name: "mainmenu";
-        parts {
-            part {
-                name: "base";
-                type: RECT;
-                mouse_events: 0;
-                description {
-                    state: "default" 0.0;
-                    color: 0 0 0 255;
-                    rel1 {
-                        relative: 0.0 0.0;
-                        offset: 0 0;
-                    }
-                    rel2 {
-                        relative: 1.0 1.0;
-                        offset: 0 0;
-                    }
-                }
+   group { name: "main";
+      max: 0 0;
+      data {
+         item: "pref_size" "320x480";
+      }
+
+      parts {
+         part { name: "background";
+            type: RECT;
+            mouse_events: 0;
+            description { state: "default" 0;
+               color: 0 0 0 200;
+               rel2 {
+                  offset: 0 0;
+               }
             }
-            part {
-				name: "configuration_list";
-				type: SWALLOW;
-				mouse_events: 1;
-				description {
-					state: "default" 0.0;
-					rel1 {
-						relative: 0.1 0.1;
-						offset: 0 0;
-					}
-					rel2 {
-						relative: 0.8 0.8;
-						offset: 0 0;
-					}
-				}
-			}
-        }
-    }
+            description { state: "@leave@0.00" 0;
+               color: 0 0 0 200;
+               rel2 {
+                  offset: 0 0;
+               }
+            }
+            description { state: "@leave@1.00" 0;
+               color: 0 0 0 200;
+               rel1 {
+                  relative: 0 -1;
+               }
+               rel2 {
+                  relative: 1 0;
+                  offset: 0 0;
+               }
+            }
+            description { state: "@select_0@0.00" 0;
+               color: 0 0 0 200;
+               rel2 {
+                  offset: 0 0;
+               }
+            }
+            description { state: "@select_1@0.00" 0;
+               color: 0 0 0 200;
+               rel2 {
+                  offset: 0 0;
+               }
+            }
+         }
+         part { name: "list_swallow_0";
+            type: SWALLOW;
+            description { state: "default" 0;
+               color: 66 66 66 255;
+               rel1 {
+                  relative: 0.05 0.05;
+                  offset: 18 274;
+               }
+               rel2 {
+                  relative: 0.95 0.15;
+                  offset: 18 274;
+               }
+            }
+            description { state: "@leave@0.00" 0;
+               color: 66 66 66 255;
+               rel1 {
+                  relative: 0.05 0.05;
+                  offset: 18 274;
+               }
+               rel2 {
+                  relative: 0.95 0.15;
+                  offset: 18 274;
+               }
+            }
+            description { state: "@leave@1.00" 0;
+               color: 66 66 66 255;
+               rel1 {
+                  relative: 0.05 0.05;
+                  offset: 18 274;
+               }
+               rel2 {
+                  relative: 0.95 0.15;
+                  offset: 18 274;
+               }
+            }
+            description { state: "@select_0@0.00" 0;
+               color: 66 66 66 255;
+               rel1 {
+                  relative: 0.05 0.05;
+                  offset: 18 274;
+               }
+               rel2 {
+                  relative: 0.95 0.15;
+                  offset: 18 274;
+               }
+            }
+            description { state: "@select_1@0.00" 0;
+               color: 66 66 66 255;
+               rel1 {
+                  relative: 0.05 0.05;
+                  offset: 18 274;
+               }
+               rel2 {
+                  relative: 0.95 0.15;
+                  offset: 18 274;
+               }
+            }
+         }
+         part { name: "list_bg_0";
+            type: RECT;
+            repeat_events: 1;
+            description { state: "default" 0;
+               color: 100 100 100 222;
+               rel1 {
+                  relative: 0.05 0.05;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.95 0.19;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+            description { state: "selected" 0;
+               color: 225 125 0 255;
+               rel1 {
+                  relative: 0.05 0.05;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.95 0.19;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+            description { state: "@leave@0.00" 0;
+               color: 100 100 100 222;
+               rel1 {
+                  relative: 0.05 0.05;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.95 0.19;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+            description { state: "@leave@1.00" 0;
+               color: 100 100 100 222;
+               rel1 {
+                  relative: 0.05 0.05;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.95 0.19;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+            description { state: "@select_0@0.00" 0;
+               color: 225 125 0 255;
+               rel1 {
+                  relative: 0.05 0.05;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.95 0.19;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+            description { state: "@select_1@0.00" 0;
+               color: 100 100 100 222;
+               rel1 {
+                  relative: 0.05 0.05;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.95 0.19;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+         }
+         part { name: "list_bg_1";
+            type: RECT;
+            repeat_events: 1;
+            description { state: "default" 0;
+               color: 100 100 100 222;
+               rel1 {
+                  relative: 0.05 0.22;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.95 0.37;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+            description { state: "selected" 0;
+               color: 225 125 0 255;
+               rel1 {
+                  relative: 0.05 0.22;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.95 0.37;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+            description { state: "@leave@0.00" 0;
+               color: 100 100 100 222;
+               rel1 {
+                  relative: 0.05 0.22;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.95 0.37;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+            description { state: "@leave@1.00" 0;
+               color: 100 100 100 222;
+               rel1 {
+                  relative: 0.05 0.22;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.95 0.37;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+            description { state: "@select_0@0.00" 0;
+               color: 100 100 100 222;
+               rel1 {
+                  relative: 0.05 0.22;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.95 0.37;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+            description { state: "@select_1@0.00" 0;
+               color: 225 125 0 255;
+               rel1 {
+                  relative: 0.05 0.22;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.95 0.37;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+         }
+         part { name: "list_text_0";
+            type: TEXT;
+            repeat_events: 1;
+            effect: SOFT_SHADOW;
+            description { state: "default" 0;
+               color: 233 233 233 255;
+               rel1 {
+                  relative: 0.05 0.08;
+                  to: "list_bg_0";
+               }
+               rel2 {
+                  relative: 0.95 0.6;
+                  offset: 0 0;
+                  to: "list_bg_0";
+               }
+               text {
+                  text: "freesmartphone.org";
+                  font: "Sans";
+                  size: 18;
+               }
+            }
+            description { state: "selected" 0;
+               color: 0 0 0 255;
+               color2: 200 200 200 255;
+               color3: 200 200 200 128;
+               rel1 {
+                  relative: 0.05 0.08;
+                  to: "list_bg_0";
+               }
+               rel2 {
+                  relative: 0.95 0.6;
+                  offset: 0 0;
+                  to: "list_bg_0";
+               }
+               text {
+                  text: "freesmartphone.org";
+                  font: "Sans";
+                  size: 20;
+               }
+            }
+            description { state: "@leave@0.00" 0;
+               color: 233 233 233 255;
+               rel1 {
+                  relative: 0.05 0.08;
+                  to: "list_bg_0";
+               }
+               rel2 {
+                  relative: 0.95 0.6;
+                  offset: 0 0;
+                  to: "list_bg_0";
+               }
+               text {
+                  text: "freesmartphone.org";
+                  font: "Sans";
+                  size: 18;
+               }
+            }
+            description { state: "@leave@1.00" 0;
+               color: 233 233 233 255;
+               rel1 {
+                  relative: 0.05 0.08;
+                  to: "list_bg_0";
+               }
+               rel2 {
+                  relative: 0.95 0.6;
+                  offset: 0 0;
+                  to: "list_bg_0";
+               }
+               text {
+                  text: "freesmartphone.org";
+                  font: "Sans";
+                  size: 18;
+               }
+            }
+            description { state: "@select_0@0.00" 0;
+               color: 0 0 0 255;
+               color2: 200 200 200 255;
+               color3: 200 200 200 128;
+               rel1 {
+                  relative: 0.05 0.08;
+                  to: "list_bg_0";
+               }
+               rel2 {
+                  relative: 0.95 0.6;
+                  offset: 0 0;
+                  to: "list_bg_0";
+               }
+               text {
+                  text: "freesmartphone.org";
+                  font: "Sans";
+                  size: 20;
+               }
+            }
+            description { state: "@select_1@0.00" 0;
+               color: 233 233 233 255;
+               rel1 {
+                  relative: 0.05 0.08;
+                  to: "list_bg_0";
+               }
+               rel2 {
+                  relative: 0.95 0.6;
+                  offset: 0 0;
+                  to: "list_bg_0";
+               }
+               text {
+                  text: "freesmartphone.org";
+                  font: "Sans";
+                  size: 18;
+               }
+            }
+         }
+         part { name: "list_desc_0";
+            type: TEXT;
+            repeat_events: 1;
+            effect: SOFT_SHADOW;
+            description { state: "default" 0;
+               align: 0 0;
+               color: 200 200 200 255;
+               rel1 {
+                  relative: 0.05 0.6;
+                  to: "list_bg_0";
+               }
+               rel2 {
+                  relative: 0.95 0.9;
+                  offset: 0 0;
+                  to: "list_bg_0";
+               }
+               text {
+                  text: "Start the FSO stack with Zhone";
+                  font: "Sans";
+                  size: 10;
+               }
+            }
+            description { state: "selected" 0;
+               align: 0 0;
+               color: 0 0 0 255;
+               color2: 200 200 200 255;
+               color3: 200 200 200 128;
+               rel1 {
+                  relative: 0.05 0.6;
+                  to: "list_bg_0";
+               }
+               rel2 {
+                  relative: 0.95 0.9;
+                  offset: 0 0;
+                  to: "list_bg_0";
+               }
+               text {
+                  text: "Start the FSO stack with Zhone";
+                  font: "Sans";
+                  size: 10;
+               }
+            }
+            description { state: "@leave@0.00" 0;
+               align: 0 0;
+               color: 200 200 200 255;
+               rel1 {
+                  relative: 0.05 0.6;
+                  to: "list_bg_0";
+               }
+               rel2 {
+                  relative: 0.95 0.9;
+                  offset: 0 0;
+                  to: "list_bg_0";
+               }
+               text {
+                  text: "Start the FSO stack with Zhone";
+                  font: "Sans";
+                  size: 10;
+               }
+            }
+            description { state: "@leave@1.00" 0;
+               align: 0 0;
+               color: 200 200 200 255;
+               rel1 {
+                  relative: 0.05 0.6;
+                  to: "list_bg_0";
+               }
+               rel2 {
+                  relative: 0.95 0.9;
+                  offset: 0 0;
+                  to: "list_bg_0";
+               }
+               text {
+                  text: "Start the FSO stack with Zhone";
+                  font: "Sans";
+                  size: 10;
+               }
+            }
+            description { state: "@select_0@0.00" 0;
+               align: 0 0;
+               color: 0 0 0 255;
+               color2: 200 200 200 255;
+               color3: 200 200 200 128;
+               rel1 {
+                  relative: 0.05 0.6;
+                  to: "list_bg_0";
+               }
+               rel2 {
+                  relative: 0.95 0.9;
+                  offset: 0 0;
+                  to: "list_bg_0";
+               }
+               text {
+                  text: "Start the FSO stack with Zhone";
+                  font: "Sans";
+                  size: 10;
+               }
+            }
+            description { state: "@select_1@0.00" 0;
+               align: 0 0;
+               color: 200 200 200 255;
+               rel1 {
+                  relative: 0.05 0.6;
+                  to: "list_bg_0";
+               }
+               rel2 {
+                  relative: 0.95 0.9;
+                  offset: 0 0;
+                  to: "list_bg_0";
+               }
+               text {
+                  text: "Start the FSO stack with Zhone";
+                  font: "Sans";
+                  size: 10;
+               }
+            }
+         }
+         part { name: "list_text_1";
+            type: TEXT;
+            mouse_events: 0;
+            effect: SOFT_SHADOW;
+            description { state: "default" 0;
+               color: 233 233 233 255;
+               rel1 {
+                  relative: 0.05 0.08;
+                  to: "list_bg_1";
+               }
+               rel2 {
+                  relative: 0.95 0.6;
+                  offset: 0 0;
+                  to: "list_bg_1";
+               }
+               text {
+                  text: "Alternative OS";
+                  font: "Sans";
+                  size: 18;
+               }
+            }
+            description { state: "selected" 0;
+               color: 0 0 0 255;
+               color2: 200 200 200 255;
+               color3: 200 200 200 128;
+               rel1 {
+                  relative: 0.05 0.08;
+                  to: "list_bg_1";
+               }
+               rel2 {
+                  relative: 0.95 0.6;
+                  offset: 0 0;
+                  to: "list_bg_1";
+               }
+               text {
+                  text: "Alternative OS";
+                  font: "Sans";
+                  size: 20;
+               }
+            }
+            description { state: "@leave@0.00" 0;
+               color: 233 233 233 255;
+               rel1 {
+                  relative: 0.05 0.08;
+                  to: "list_bg_1";
+               }
+               rel2 {
+                  relative: 0.95 0.6;
+                  offset: 0 0;
+                  to: "list_bg_1";
+               }
+               text {
+                  text: "Alternative OS";
+                  font: "Sans";
+                  size: 18;
+               }
+            }
+            description { state: "@leave@1.00" 0;
+               color: 0 0 0 255;
+               color2: 200 200 200 255;
+               color3: 200 200 200 128;
+               rel1 {
+                  relative: 0.05 0.08;
+                  to: "list_bg_1";
+               }
+               rel2 {
+                  relative: 0.95 0.6;
+                  offset: 0 0;
+                  to: "list_bg_1";
+               }
+               text {
+                  text: "Alternative OS";
+                  font: "Sans";
+                  size: 20;
+               }
+            }
+            description { state: "@select_0@0.00" 0;
+               color: 233 233 233 255;
+               rel1 {
+                  relative: 0.05 0.08;
+                  to: "list_bg_1";
+               }
+               rel2 {
+                  relative: 0.95 0.6;
+                  offset: 0 0;
+                  to: "list_bg_1";
+               }
+               text {
+                  text: "Alternative OS";
+                  font: "Sans";
+                  size: 18;
+               }
+            }
+            description { state: "@select_1@0.00" 0;
+               color: 0 0 0 255;
+               color2: 200 200 200 255;
+               color3: 200 200 200 128;
+               rel1 {
+                  relative: 0.05 0.08;
+                  to: "list_bg_1";
+               }
+               rel2 {
+                  relative: 0.95 0.6;
+                  offset: 0 0;
+                  to: "list_bg_1";
+               }
+               text {
+                  text: "Alternative OS";
+                  font: "Sans";
+                  size: 20;
+               }
+            }
+         }
+         part { name: "list_desc_1";
+            type: TEXT;
+            mouse_events: 0;
+            effect: SOFT_SHADOW;
+            description { state: "default" 0;
+               align: 0 0;
+               color: 200 200 200 255;
+               rel1 {
+                  relative: 0.05 0.6;
+                  to: "list_bg_1";
+               }
+               rel2 {
+                  relative: 0.95 0.9;
+                  offset: 0 0;
+                  to: "list_bg_1";
+               }
+               text {
+                  text: "Still want to use WebOS, heh?";
+                  font: "Sans";
+                  size: 10;
+               }
+            }
+            description { state: "selected" 0;
+               align: 0 0;
+               color: 0 0 0 255;
+               color2: 200 200 200 255;
+               color3: 200 200 200 128;
+               rel1 {
+                  relative: 0.05 0.6;
+                  to: "list_bg_1";
+               }
+               rel2 {
+                  relative: 0.95 0.9;
+                  offset: 0 0;
+                  to: "list_bg_1";
+               }
+               text {
+                  text: "Still want to use WebOS, heh?";
+                  font: "Sans";
+                  size: 10;
+               }
+            }
+            description { state: "@leave@0.00" 0;
+               align: 0 0;
+               color: 200 200 200 255;
+               rel1 {
+                  relative: 0.05 0.6;
+                  to: "list_bg_1";
+               }
+               rel2 {
+                  relative: 0.95 0.9;
+                  offset: 0 0;
+                  to: "list_bg_1";
+               }
+               text {
+                  text: "Still want to use WebOS, heh?";
+                  font: "Sans";
+                  size: 10;
+               }
+            }
+            description { state: "@leave@1.00" 0;
+               align: 0 0;
+               color: 200 200 200 255;
+               rel1 {
+                  relative: 0.05 0.6;
+                  to: "list_bg_1";
+               }
+               rel2 {
+                  relative: 0.95 0.9;
+                  offset: 0 0;
+                  to: "list_bg_1";
+               }
+               text {
+                  text: "Still want to use WebOS, heh?";
+                  font: "Sans";
+                  size: 10;
+               }
+            }
+            description { state: "@select_0@0.00" 0;
+               align: 0 0;
+               color: 200 200 200 255;
+               rel1 {
+                  relative: 0.05 0.6;
+                  to: "list_bg_1";
+               }
+               rel2 {
+                  relative: 0.95 0.9;
+                  offset: 0 0;
+                  to: "list_bg_1";
+               }
+               text {
+                  text: "Still want to use WebOS, heh?";
+                  font: "Sans";
+                  size: 10;
+               }
+            }
+            description { state: "@select_1@0.00" 0;
+               align: 0 0;
+               color: 0 0 0 255;
+               color2: 200 200 200 255;
+               color3: 200 200 200 128;
+               rel1 {
+                  relative: 0.05 0.6;
+                  to: "list_bg_1";
+               }
+               rel2 {
+                  relative: 0.95 0.9;
+                  offset: 0 0;
+                  to: "list_bg_1";
+               }
+               text {
+                  text: "Still want to use WebOS, heh?";
+                  font: "Sans";
+                  size: 10;
+               }
+            }
+         }
+         part { name: "boot_rect";
+            type: RECT;
+            description { state: "default" 0;
+               color: 0 255 0 100;
+               rel1 {
+                  relative: 0.2 0.8;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.8 0.95;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+            description { state: "@leave@0.00" 0;
+               color: 0 255 0 100;
+               rel1 {
+                  relative: 0.2 0.8;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.8 0.95;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+            description { state: "@leave@1.00" 0;
+               color: 0 255 0 100;
+               rel1 {
+                  relative: 0.2 0.8;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.8 0.95;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+            description { state: "@select_0@0.00" 0;
+               color: 0 255 0 100;
+               rel1 {
+                  relative: 0.2 0.8;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.8 0.95;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+            description { state: "@select_1@0.00" 0;
+               color: 0 255 0 100;
+               rel1 {
+                  relative: 0.2 0.8;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 0.8 0.95;
+                  offset: 0 0;
+                  to: "background";
+               }
+            }
+         }
+         part { name: "boot_text";
+            type: TEXT;
+            mouse_events: 0;
+            effect: SOFT_SHADOW;
+            description { state: "default" 0;
+               color: 0 0 0 255;
+               color2: 255 253 255 255;
+               color3: 255 255 255 128;
+               rel1 {
+                  relative: 0.1 0.1;
+                  to: "boot_rect";
+               }
+               rel2 {
+                  relative: 0.9 0.9;
+                  offset: 0 0;
+                  to: "boot_rect";
+               }
+               text {
+                  text: "Launch";
+                  font: "Sans";
+                  size: 28;
+               }
+            }
+            description { state: "@leave@0.00" 0;
+               color: 0 0 0 255;
+               color2: 255 253 255 255;
+               color3: 255 255 255 128;
+               rel1 {
+                  relative: 0.1 0.1;
+                  to: "boot_rect";
+               }
+               rel2 {
+                  relative: 0.9 0.9;
+                  offset: 0 0;
+                  to: "boot_rect";
+               }
+               text {
+                  text: "Launch";
+                  font: "Sans";
+                  size: 28;
+               }
+            }
+            description { state: "@leave@1.00" 0;
+               color: 0 0 0 255;
+               color2: 255 253 255 255;
+               color3: 255 255 255 128;
+               rel1 {
+                  relative: 0.1 0.1;
+                  to: "boot_rect";
+               }
+               rel2 {
+                  relative: 0.9 0.9;
+                  offset: 0 0;
+                  to: "boot_rect";
+               }
+               text {
+                  text: "Launch";
+                  font: "Sans";
+                  size: 28;
+               }
+            }
+            description { state: "@select_0@0.00" 0;
+               color: 0 0 0 255;
+               color2: 255 253 255 255;
+               color3: 255 255 255 128;
+               rel1 {
+                  relative: 0.1 0.1;
+                  to: "boot_rect";
+               }
+               rel2 {
+                  relative: 0.9 0.9;
+                  offset: 0 0;
+                  to: "boot_rect";
+               }
+               text {
+                  text: "Launch";
+                  font: "Sans";
+                  size: 28;
+               }
+            }
+            description { state: "@select_1@0.00" 0;
+               color: 0 0 0 255;
+               color2: 255 253 255 255;
+               color3: 255 255 255 128;
+               rel1 {
+                  relative: 0.1 0.1;
+                  to: "boot_rect";
+               }
+               rel2 {
+                  relative: 0.9 0.9;
+                  offset: 0 0;
+                  to: "boot_rect";
+               }
+               text {
+                  text: "Launch";
+                  font: "Sans";
+                  size: 28;
+               }
+            }
+         }
+         part { name: "info_text";
+            type: TEXT;
+            mouse_events: 0;
+            effect: OUTLINE_SHADOW;
+            description { state: "default" 0;
+               rel1 {
+                  relative: 0 0.75;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 1 0.75;
+                  offset: 0 0;
+                  to: "background";
+               }
+               text {
+                  text: "Booting in 5 seconds";
+                  font: "Sans";
+                  size: 16;
+               }
+            }
+            description { state: "@leave@0.00" 0;
+               rel1 {
+                  relative: 0 0.75;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 1 0.75;
+                  offset: 0 0;
+                  to: "background";
+               }
+               text {
+                  text: "";
+                  font: "Sans";
+                  size: 16;
+               }
+            }
+            description { state: "@leave@1.00" 0;
+               rel1 {
+                  relative: 0 0.75;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 1 0.75;
+                  offset: 0 0;
+                  to: "background";
+               }
+               text {
+                  text: "Booting in 5 seconds";
+                  font: "Sans";
+                  size: 16;
+               }
+            }
+            description { state: "@select_0@0.00" 0;
+               rel1 {
+                  relative: 0 0.75;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 1 0.75;
+                  offset: 0 0;
+                  to: "background";
+               }
+               text {
+                  text: "";
+                  font: "Sans";
+                  size: 16;
+               }
+            }
+            description { state: "@select_1@0.00" 0;
+               rel1 {
+                  relative: 0 0.75;
+                  to: "background";
+               }
+               rel2 {
+                  relative: 1 0.75;
+                  offset: 0 0;
+                  to: "background";
+               }
+               text {
+                  text: "";
+                  font: "Sans";
+                  size: 16;
+               }
+            }
+         }
+      }
+      programs {
+         program { name: "destroy";
+            signal: "mouse,up,1";
+            source: "boot_rect";
+            transition: LINEAR 0.00000;
+            after: "@leave@0.00";
+         }
+         program { name: "@leave@end";
+            action: SIGNAL_EMIT "animation,end" "leave";
+            transition: LINEAR 0.00000;
+         }
+         program { name: "@leave@0.00";
+            signal: "animation,play";
+            source: "leave";
+            action: STATE_SET "@leave@0.00" 0.00;
+            transition: LINEAR 0.00000;
+            target: "background";
+            target: "list_swallow_0";
+            target: "list_bg_0";
+            target: "list_bg_1";
+            target: "list_text_0";
+            target: "list_desc_0";
+            target: "boot_rect";
+            target: "boot_text";
+            target: "info_text";
+            target: "list_text_1";
+            target: "list_desc_1";
+            after: "@leave@1.00";
+         }
+         program { name: "@leave@stop";
+            signal: "animation,stop";
+            source: "leave";
+            action: ACTION_STOP;
+            transition: LINEAR 0.00000;
+            target: "@leave@0.00";
+            target: "@leave@end";
+            target: "@leave@1.00";
+         }
+         program { name: "@leave@1.00";
+            action: STATE_SET "@leave@1.00" 0.00;
+            transition: ACCELERATE 1.00000;
+            target: "background";
+            target: "list_swallow_0";
+            target: "list_bg_0";
+            target: "list_bg_1";
+            target: "list_text_0";
+            target: "list_desc_0";
+            target: "boot_rect";
+            target: "boot_text";
+            target: "info_text";
+            target: "list_text_1";
+            target: "list_desc_1";
+            after: "@leave@end";
+         }
+         program { name: "@select_0@end";
+            action: SIGNAL_EMIT "animation,end" "select_0";
+            transition: LINEAR 0.00000;
+         }
+         program { name: "@select_0@0.00";
+            signal: "animation,play";
+            source: "select_0";
+            action: STATE_SET "@select_0@0.00" 0.00;
+            transition: LINEAR 0.00000;
+            target: "background";
+            target: "list_swallow_0";
+            target: "list_bg_0";
+            target: "list_bg_1";
+            target: "list_text_0";
+            target: "list_desc_0";
+            target: "list_text_1";
+            target: "list_desc_1";
+            target: "boot_rect";
+            target: "boot_text";
+            target: "info_text";
+            after: "@select_0@end";
+         }
+         program { name: "@select_0@stop";
+            signal: "animation,stop";
+            source: "select_0";
+            action: ACTION_STOP;
+            transition: LINEAR 0.00000;
+            target: "@select_0@0.00";
+            target: "@select_0@end";
+         }
+         program { name: "@select_1@end";
+            action: SIGNAL_EMIT "animation,end" "select_1";
+            transition: LINEAR 0.00000;
+         }
+         program { name: "@select_1@0.00";
+            signal: "animation,play";
+            source: "select_1";
+            action: STATE_SET "@select_1@0.00" 0.00;
+            transition: LINEAR 0.00000;
+            target: "background";
+            target: "list_swallow_0";
+            target: "list_bg_0";
+            target: "list_bg_1";
+            target: "list_text_0";
+            target: "list_desc_0";
+            target: "list_text_1";
+            target: "list_desc_1";
+            target: "boot_rect";
+            target: "boot_text";
+            target: "info_text";
+            after: "@select_1@end";
+         }
+         program { name: "@select_1@stop";
+            signal: "animation,stop";
+            source: "select_1";
+            action: ACTION_STOP;
+            transition: LINEAR 0.00000;
+            target: "@select_1@0.00";
+            target: "@select_1@end";
+         }
+         program { name: "select_1";
+            signal: "mouse,up,*";
+            source: "list_bg_1";
+            transition: LINEAR 0.00000;
+            after: "@select_1@0.00";
+         }
+         program { name: "select_0";
+            signal: "mouse,up,*";
+            source: "list_bg_0";
+            transition: LINEAR 0.00000;
+            after: "@select_0@0.00";
+         }
+      }
+   }
 }
 

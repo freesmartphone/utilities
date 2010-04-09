@@ -66,7 +66,7 @@ public class MainView {
 		
 		/* create our main menu edje object */
 		_mainmenu = new Edje.Object( _evas );
-		_mainmenu.file_set( _controller.themePath, "mainmenu" );
+		_mainmenu.file_set( _controller.themePath, "main" );
 		_mainmenu.resize( 320, 480 );
 		_mainmenu.layer_set( 0 );
 		_mainmenu.show();

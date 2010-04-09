@@ -1,2 +1,2 @@
 #!/bin/sh
-edje_cc $@ -id . -fd . default.edc -o default.edj
+edje_cc $@ -id images -fd fonts default.edc -o default.edj
