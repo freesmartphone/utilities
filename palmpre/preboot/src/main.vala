@@ -35,6 +35,14 @@ public class MainView {
 	private EcoreEvas.Window _window;
 	private Edje.Object _mainmenu;
 	private string _theme_path;
+        private TimeoutSource timeoutSource;
+
+        const string text_format = "list_text_%i";
+        const string desc_format = "list_desc_%i";
+        const string list_format = "list_bg_%i";
+
+        const string kexec_load = "kexec";
+        const string kexec_boot = "kexec --exec";
 
 	public Evas.Canvas evas {
 		get { return evas; }
@@ -71,20 +79,83 @@ public class MainView {
 		_mainmenu.layer_set( 0 );
 		_mainmenu.show();
 	}
+
+        public void connectCallbacks() {
+                _mainmenu.signal_callback_add("mouse,clicked,1", "list_bg_*", onItemSelected);
+                _mainmenu.signal_callback_add("mouse,clicked,1", "boot_rect", onItemSelected);
+                if (controller.bootTimeout > 0) {
+                    debug(@"connecting timoout $(controller.bootTimeout)");
+                    timeoutSource = new TimeoutSource.seconds(1);
+                    timeoutSource.set_callback(onBootTimeout);
+                    timeoutSource.attach(MainContext.default());
+                }  
+        }
 	
-	public void bindBootConfiguration(GLib.List<BootConfiguration> bootConigurations) {
+	public void bindBootConfiguration(Gee.AbstractList<BootConfiguration> bootConfigurations) {
+                int i = 0;
+                foreach(var config in bootConfigurations) {
+                        //we only have 2 entries atm
+                        if(i>=2)
+                             continue;
+                        debug(@"handling $(config.name) %s: $(config.description)", text_format.printf(i));
+                       _mainmenu.part_text_set(text_format.printf(i), config.name);
+                       _mainmenu.part_text_set(desc_format.printf(i), config.description);
+                       i ++;
+                }
+                _mainmenu.signal_emit(list_format.printf(controller.defaultSelection), "mouse,clicked,1");
 	}
+
+        private void onItemSelected( Edje.Object obj, string emission, string source) {
+                debug(@"$(source) clicked");
+                if(timeoutSource != null) {
+                    debug("removing source");
+                    timeoutSource.destroy();
+                    timeoutSource = null;
+                    _mainmenu.part_text_set("info_text", "");
+                }
+        }
+        private void bootKernel() {
+                _mainmenu.part_text_set("info_text", "Starting kernel");
+        }
+
+        private void loadKernel() {
+                _mainmenu.part_text_set("info_text", "Loading kernel");
+        }
+
+        private bool onBootTimeout() {
+                debug(@"timeout: $(controller.bootTimeout)");
+                controller.bootTimeout --;
+                _mainmenu.part_text_set("info_text", @"Booting in $(controller.bootTimeout) seconds");
+                if(controller.bootTimeout == 0) {
+                        debug("Timeout reached");
+                        loadKernel();
+                        bootKernel();
+                        return false;
+                }
+                return true;
+        }
 }
 
 public class MainController {
 	private MainView _mainView;
 	private string _themePath;
 	private string _configPath;
-	private Gee.AbstractList<BootConfiguration> configuratons = new Gee.ArrayList<BootConfiguration>();
-	
+
+
+	public Gee.AbstractList<BootConfiguration> configurations {
+            default = new Gee.ArrayList<BootConfiguration>();
+            get;
+            set;
+        }
 	public string themePath {
 		get { return _themePath; }
 	}
+        public int bootTimeout {
+                get; set; 
+        }
+        public int defaultSelection {
+                get; set;
+        }
 	
 	public MainController() {
 		_mainView = new MainView();
@@ -96,19 +167,27 @@ public class MainController {
 	
 	public void loadConfiguration() {
 		FsoFramework.SmartKeyFile sf = new FsoFramework.SmartKeyFile();
-		GLib.List<BootConfiguration> configurations = new GLib.List<BootConfiguration>();
-		if (!sf.loadFromFile(_configPath)) {
+
+		if (sf.loadFromFile(_configPath)) {
 			var sections = sf.sectionsWithPrefix("boot.");
 			foreach(var section in sections) {
+                                debug(@"Section: $(section)");
 				BootConfiguration bootConfig = new BootConfiguration();
 				bootConfig.name = sf.stringValue(section, "title", "<unknown>");
 				bootConfig.description = sf.stringValue(section, "description", "");
 				bootConfig.kernel = sf.stringValue(section, "kernel", "");
 				bootConfig.root_fs = sf.stringValue(section, "root_fs", "");
 				bootConfig.image_path = sf.stringValue(section, "image_path", "");
-				configuratons.add(bootConfig);
+				configurations.add(bootConfig);
 			}
+
+                        bootTimeout = sf.intValue("general", "boot_timeout", -1);
+                        defaultSelection = sf.intValue("general", "default", 0);
 		}
+                else
+                {
+                     debug(@"Cannot load config: $(_configPath)");
+                }
 		_mainView.bindBootConfiguration(configurations);
 	}
 	
@@ -116,8 +195,10 @@ public class MainController {
 		Ecore.init();
 		EcoreEvas.init();
 		Edje.init();
-		
+
 		_mainView.create();
+                loadConfiguration();
+                _mainView.connectCallbacks();
 	}
 	
 	public void run() {
@@ -131,9 +212,22 @@ public class MainController {
 		Edje.shutdown();
 		EcoreEvas.shutdown();
 	}
+
 }
 
 public static int main( string[] args) {
+        /* glib/ecore integration */
+        GLib.MainLoop gmain = new GLib.MainLoop( null, false );
+        if ( Ecore.MainLoop.glib_integrate() )
+        {
+                debug( "GLib mainloop integration successfully completed" );
+        }
+        else
+        {
+                critical( "Could not integrate glib mainloop. This library needs ecore compiled with glib mainloop support" );
+                return -1;
+        }
+
 	var controller = new MainController();
 	controller.init();
 	controller.run();
