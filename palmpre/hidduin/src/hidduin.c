@@ -54,6 +54,8 @@ struct ts_sample {
 	struct timeval	tv;
 };
 
+#define DEBUG
+
 #define HID_CONFIG_FILE			"/etc/hidd/HidPlugins.xml"
 #define HID_DEVICE_TOUCHPANEL	0
 
@@ -84,6 +86,11 @@ hid_init(hid_plugin_settings_t *settings, const char *config)
 			return -1;
 		}
 	}
+
+#ifdef DEBUG
+	fprintf(stdout, "HidAllocSettings: success\n");
+#endif
+
 	return 0;
 }
 
@@ -113,6 +120,10 @@ hid_handle_open(hid_plugin_settings_t *settings, int device)
 		settings = NULL;
 		return NULL;
 	}
+
+#ifdef DEBUG
+	fprintf(stdout, "HidInitPluginTransport: success\n");
+#endif
 
 	return handle;
 }  
@@ -144,11 +155,14 @@ static hid_plugin_settings_t *settings;
 
 struct tsdev* ts_open(const char *dev_name, int nonblock)
 {
-	hid_init(settings, HID_CONFIG_FILE);
+	if (hid_init(settings, HID_CONFIG_FILE) < 0) 
+		return NULL;
+
 	hid_handle_t *handle = hid_handle_open(settings, HID_DEVICE_TOUCHPANEL);
 	if (handle) {
 		return (struct tsdev*)handle;
 	}
+
 	return NULL;
 }
 
@@ -228,6 +242,9 @@ int ts_read(struct tsdev *dev, struct ts_sample *sample, int max_sample)
 		
 		/* assume we are non-blocking and check for socket data */
 		if (select(ts_fd(dev) + 1, &fds, NULL, NULL, &tv_zero) > 0) {
+#ifdef DEBUG
+			fprintf(stdout, "ts_read: got a sample\n");
+#endif
 			struct input_event hid_events[MAX_EVENTS];
 			int max_event = sizeof(hid_events) / sizeof(hid_events[0]);
 			int num_event = hid_handle_event_read(handle, hid_events, max_event);
@@ -376,6 +393,10 @@ int main (int argc, char *argv[]) {
 	struct tsdev *dev;
 
 	dev = ts_open(NULL, 0);
+	if (dev == NULL) {
+		fprintf(stderr, "could not open hidd\n");
+		exit(1);
+	}
 
 	while (1) {
 		struct ts_sample *sample = NULL;
