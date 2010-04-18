@@ -113,7 +113,7 @@ hid_handle_open(hid_plugin_settings_t *settings, int device)
 	if (settings == NULL)
 		return NULL;
             
-	rc = HidInitPluginTransport(plugin_names[device], settings, num_plugins, &handle);
+	rc = HidInitPluginTransport("HidTouchpanel", settings, num_plugins, &handle);
 
 	if (rc < 0) {
 		HidFreePluginSettings(&settings, num_plugins);
