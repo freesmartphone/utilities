@@ -56,12 +56,6 @@ struct ts_sample {
 
 #define DEBUG
 
-#ifdef DEBUG
-#define DEBUG(x) fprintf(stdout, x)
-#else
-#define DEBUG(x)
-#endif
-
 #define HID_CONFIG_FILE			"/etc/HidPlugins.xml"
 #define HID_DEVICE_TOUCHPANEL	0
 
@@ -121,7 +115,7 @@ hid_handle_open(hid_plugin_settings_t *settings, int device)
     
 	if (settings == NULL) {
 		if (hid_init(settings, "/etc/HidPlugins.xml") != 0)
-			return NULL
+			return NULL;
 	}
  
 	rc = HidInitPluginTransport("HidTouchpanel", settings, num_plugins, &handle);
@@ -171,8 +165,9 @@ struct tsdev* ts_open(const char *dev_name, int nonblock)
 {
 	if (hid_init(settings, HID_CONFIG_FILE) < 0) 
 		return NULL;
-
-	DEBUG("settings == null");
+#ifdef DEBUG
+	fprintf(stdout, "settings == null\n");
+#endif
 
 	hid_handle_t *handle = hid_handle_open(settings, HID_DEVICE_TOUCHPANEL);
 	return (struct tsdev*)handle;
