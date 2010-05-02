@@ -1,3 +1,0 @@
-NOTE: This is only a dummy implementation of the libhid library provided by 
-Palm's webOS. It's only used to compile tslib-hid within oe. Later tslib-hid
-is running against the real implementation from Palm.
