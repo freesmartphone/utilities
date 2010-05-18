@@ -8,7 +8,6 @@ VALAC_ARGS = \
 	--pkg linux \
 	--pkg gio-2.0 \
 	--pkg fsobasics-2.0 \
-	--pkg config \
 	--save-temps \
 	--basedir $(top_srcdir)
 
