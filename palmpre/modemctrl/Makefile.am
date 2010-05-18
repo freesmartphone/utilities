@@ -2,6 +2,7 @@ NULL =
 
 AUTOMAKE_OPTIONS = subdir-objects
 VALAC_ARGS = \
+	--basedir $(top_srcdir) \
 	--vapidir vapi \
 	--pkg posix \
 	--pkg linux \
