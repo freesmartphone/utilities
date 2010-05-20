@@ -67,8 +67,8 @@ public int main( string[] args )
     
     if (machineType != "Sirloin OMAP3430 board")
     {
-        stdout.printf("ERROR: modemctrl is currently only supported for the Palm Pre machine\n");
-        return 0;
+        stdout.printf(@"ERROR: modemctrl is currently not supported for this machine '$(machineType)'\n");
+        //return 0;
     }
     
     if ( args.length == 2 && args[1].has_prefix( "--h" ) )
