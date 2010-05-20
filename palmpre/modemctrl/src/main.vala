@@ -26,57 +26,77 @@ const string PALMPRE_POWER_ON_NODE = "/sys/user_hw/pins/modem/power_on/level";
 const string PALMPRE_BOOT_MODE_NODE = "/sys/user_hw/pins/modem/boot_mode/level";
 const string PALMPRE_WAKEUP_MODEM_NODE = "/sys/user_hw/pins/modem/wakeup_modem/level";
 
-public void writeToSysfsNode(string node, string val)
-{
-    if (FsoFramework.FileHandling.isPresent(node))
-    {
-        FsoFramework.FileHandling.write(val, node);
-    }
-    else
-    {
-        stdout.printf(@"ERROR: sysfs node '$(node)' is not available");
-    }
-}
 
-public void modem_start()
-{
-    FsoFramework.theLogger.info("Power up the modem ...");
-    writeToSysfsNode(PALMPRE_POWER_ON_NODE, "1");
-}
 
-public void modem_stop()
+public abstract class Modem
 {
-    FsoFramework.theLogger.info("Power down the modem ...");
-    writeToSysfsNode(PALMPRE_BOOT_MODE_NODE, "0");
-    writeToSysfsNode(PALMPRE_POWER_ON_NODE, "0");
-}
-
-public void modem_restart()
-{
-    FsoFramework.theLogger.info("Restart the modem ...");
-    writeToSysfsNode(PALMPRE_BOOT_MODE_NODE, "0");
-    writeToSysfsNode(PALMPRE_WAKEUP_MODEM_NODE, "0");
-    writeToSysfsNode(PALMPRE_POWER_ON_NODE, "0");
+    public abstract void powerUp();
+    public abstract void powerDown();
+    public abstract void cycle();
     
-    Posix.sleep(2);
-    
-    writeToSysfsNode(PALMPRE_POWER_ON_NODE, "1");
-    writeToSysfsNode(PALMPRE_WAKEUP_MODEM_NODE, "1");
+    protected void writeToSysfsNode(string node, string val)
+    {
+        if (FsoFramework.FileHandling.isPresent(node))
+        {
+            FsoFramework.FileHandling.write(val, node);
+        }
+        else
+        {
+            stdout.printf(@"ERROR: sysfs node '$(node)' is not available");
+        }
+    }
 }
+
+public class QualcommPalmPreModem : Modem
+{
+    public override void powerUp()
+    {
+        writeToSysfsNode(PALMPRE_POWER_ON_NODE, "1");
+    } 
+    
+    public override void powerDown()
+    {
+        writeToSysfsNode(PALMPRE_BOOT_MODE_NODE, "0");
+        writeToSysfsNode(PALMPRE_POWER_ON_NODE, "0");
+    }
+    
+    public override void cycle()
+    {
+        writeToSysfsNode(PALMPRE_BOOT_MODE_NODE, "0");
+        writeToSysfsNode(PALMPRE_WAKEUP_MODEM_NODE, "0");
+        writeToSysfsNode(PALMPRE_POWER_ON_NODE, "0");
+        
+        Posix.sleep(2);
+        
+        writeToSysfsNode(PALMPRE_POWER_ON_NODE, "1");
+        writeToSysfsNode(PALMPRE_WAKEUP_MODEM_NODE, "1");
+    }
+}
+
+
+
 
 public int main( string[] args )
 {
     string machineType = FsoFramework.Utility.hardware();
+    Modem modem = null;
     
-    if (machineType != "SirloinOMAP3430board")
+    if ( args.length == 1 && args[1].has_prefix( "--h" ) )
     {
-        stdout.printf(@"ERROR: modemctrl is currently not supported for this machine '$(machineType)'\n");
+        stdout.printf( "Usage:\nmodemctrl [up|down|cycle] - Control the modem.\n" );
         return 0;
     }
     
-    if ( args.length == 2 && args[1].has_prefix( "--h" ) )
+    switch (machineType)
     {
-        stdout.printf( "Usage:\nmodemctrl [start|stop|restart] - Control the modem.\n" );
+    case "SirloinOMAP3430board":
+        modem = new QualcommPalmPreModem();
+        break;
+    }
+    
+    if (modem == null)
+    {
+        stdout.printf(@"ERROR: modemctrl is currently not supported for this machine '$(machineType)'\n");
         return 0;
     }
     
@@ -84,14 +104,17 @@ public int main( string[] args )
     
     switch (command) 
     {
-    case "start":
-        modem_start();
+    case "up":
+        FsoFramework.theLogger.info("Power up the modem ...");
+        modem.powerUp();
         break;
-    case "stop":
-        modem_stop();
+    case "down":
+        FsoFramework.theLogger.info("Power down the modem ...");
+        modem.powerDown();
         break;
-    case "restart":
-        modem_restart();
+    case "cycle":
+        FsoFramework.theLogger.info("Cyle the modem ...");
+        modem.cycle();
         break;
     default: 
         break;
