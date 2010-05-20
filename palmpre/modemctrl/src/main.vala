@@ -40,17 +40,20 @@ public void writeToSysfsNode(string node, string val)
 
 public void modem_start()
 {
+    FsoFramework.theLogger.info("Power up the modem ...");
     writeToSysfsNode(PALMPRE_POWER_ON_NODE, "1");
 }
 
 public void modem_stop()
 {
+    FsoFramework.theLogger.info("Power down the modem ...");
     writeToSysfsNode(PALMPRE_BOOT_MODE_NODE, "0");
     writeToSysfsNode(PALMPRE_POWER_ON_NODE, "0");
 }
 
 public void modem_restart()
 {
+    FsoFramework.theLogger.info("Restart the modem ...");
     writeToSysfsNode(PALMPRE_BOOT_MODE_NODE, "0");
     writeToSysfsNode(PALMPRE_WAKEUP_MODEM_NODE, "0");
     writeToSysfsNode(PALMPRE_POWER_ON_NODE, "0");
@@ -65,10 +68,10 @@ public int main( string[] args )
 {
     string machineType = FsoFramework.Utility.hardware();
     
-    if (machineType != "Sirloin OMAP3430 board")
+    if (machineType != "SirloinOMAP3430board")
     {
         stdout.printf(@"ERROR: modemctrl is currently not supported for this machine '$(machineType)'\n");
-        //return 0;
+        return 0;
     }
     
     if ( args.length == 2 && args[1].has_prefix( "--h" ) )
