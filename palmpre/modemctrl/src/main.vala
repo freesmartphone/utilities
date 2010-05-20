@@ -80,7 +80,7 @@ public int main( string[] args )
         return 0;
     }
     
-    var command = args[1] ?? "restart";
+    var command = args[1] ?? "";
     
     switch (command) 
     {
