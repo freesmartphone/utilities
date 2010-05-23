@@ -1,0 +1,21 @@
+AC_PREREQ(2.53)
+AC_INIT(librpc, 0.1, http://source.android.com/)
+AM_INIT_AUTOMAKE()
+AM_CONFIG_HEADER(config.h)
+AM_MAINTAINER_MODE
+
+AC_GNU_SOURCE
+AC_ISC_POSIX
+AC_PROG_CC
+AC_STDC_HEADERS
+AC_PROG_LIBTOOL
+AC_LIBTOOL_DLOPEN
+
+# output
+AC_CONFIG_FILES([
+	Makefile
+	librpc/Makefile
+	gps/Makefile
+])
+
+AC_OUTPUT
