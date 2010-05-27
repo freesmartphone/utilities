@@ -70,7 +70,7 @@ static void *cb_context(void *__u)
                               &client->wait_cb_lock);
         /* We tell the thread it's time to exit by setting cb_stop to nonzero
            and signalling the conditional variable.  When there's no data, we
-           skip to the top of the loop and exit. 
+           skip to the top of the loop and exit.
         */
         if (!client->got_cb) {
             D("RPC-callback thread for %08x:%08x: signalled but no data.\n",
@@ -89,7 +89,7 @@ static void *cb_context(void *__u)
                 ntohl(((uint32 *)(client->xdr->in_msg))[RPC_OFFSET+3]);
             rpcvers_t vers =
                 ntohl(((uint32 *)(client->xdr->in_msg))[RPC_OFFSET+4]);
-            
+
             svc = svc_find(the_xprt, prog, vers);
             if (svc) {
                 XDR **svc_xdr = (XDR **)svc;
@@ -100,7 +100,7 @@ static void *cb_context(void *__u)
                   ntohl(((uint32 *)(client->xdr->in_msg))[RPC_OFFSET]),
                   client->xdr,
                   (uint32_t)prog, (int)vers);
-                /* We transplant the xdr of the client into the entry 
+                /* We transplant the xdr of the client into the entry
                    representing the callback client in the list of servers.
                    Note that since we hold the wait_cb_lock for this client,
                    if another call for this callback client arrives before
@@ -116,14 +116,14 @@ static void *cb_context(void *__u)
                       (uint32_t)prog, (int)vers);
                     xdr_destroy_common(*svc_xdr);
                 }
-                
+
                 D("%08x:%08x cloning XDR for "
                   "callback client %08x:%08x.\n",
                   client->xdr->x_prog,
                   client->xdr->x_vers,
                   (uint32_t)prog, (int)vers);
                 *svc_xdr = xdr_clone(client->xdr);
-                
+
                 (*svc_xdr)->x_prog = prog;
                 (*svc_xdr)->x_vers = vers;
                 memcpy((*svc_xdr)->in_msg,
@@ -147,8 +147,8 @@ static void *cb_context(void *__u)
             else E("%08x:%08x call packet arrived, but there's no "
                    "RPC server registered for %08x:%08x.\n",
                    client->xdr->x_prog,
-                   client->xdr->x_vers,                   
-                   (uint32_t)prog, (int)vers);                           
+                   client->xdr->x_vers,
+                   (uint32_t)prog, (int)vers);
         }
         else E("%08x:%08x call packet arrived, but there's "
                "no RPC transport!\n",
@@ -200,7 +200,7 @@ static void *rx_context(void *__u __attribute__((unused)))
                           client->xdr->x_prog, client->xdr->x_vers);
                         pthread_cond_wait(
                             &client->input_xdr_wait,
-                            &client->input_xdr_lock);                        
+                            &client->input_xdr_lock);
                     }
                     D("%08x:%08x reading data.\n",
                       client->xdr->x_prog, client->xdr->x_vers);
@@ -208,7 +208,7 @@ static void *rx_context(void *__u __attribute__((unused)))
                     client->input_xdr_busy = 1;
                     pthread_mutex_unlock(&client->input_xdr_lock);
 
-                    if (((uint32 *)(client->xdr->in_msg))[RPC_OFFSET+1] == 
+                    if (((uint32 *)(client->xdr->in_msg))[RPC_OFFSET+1] ==
                         htonl(RPC_MSG_REPLY)) {
                         /* Wake up the RPC client to receive its data. */
                         D("%08x:%08x received REPLY (XID %d), "
@@ -232,7 +232,7 @@ static void *rx_context(void *__u __attribute__((unused)))
                         if (client->cb_stop < 0) {
                             D("%08x:%08x starting callback thread.\n",
                               client->xdr->x_prog,
-                              client->xdr->x_vers);                            
+                              client->xdr->x_vers);
                             client->cb_stop = 0;
                             pthread_create(&client->cb_thread,
                                            NULL,
@@ -240,7 +240,7 @@ static void *rx_context(void *__u __attribute__((unused)))
                         }
                         D("%08x:%08x waking up callback thread.\n",
                           client->xdr->x_prog,
-                          client->xdr->x_vers);                            
+                          client->xdr->x_vers);
                         pthread_cond_signal(&client->wait_cb);
                         pthread_mutex_unlock(&client->wait_cb_lock);
                     }
@@ -301,7 +301,7 @@ clnt_call(
     if (!xdr_call_msg_start (xdr, xdr->x_prog, xdr->x_vers,
                              proc, &cred, &verf)) {
         XDR_MSG_ABORT (xdr);
-        ret = RPC_CANTENCODEARGS; 
+        ret = RPC_CANTENCODEARGS;
         E("%08x:%08x error in xdr_call_msg_start()\n",
           client->xdr->x_prog,
           client->xdr->x_vers);
@@ -312,7 +312,7 @@ clnt_call(
 
     if (!xdr_args (xdr, args_ptr)) {
         XDR_MSG_ABORT(xdr);
-        ret = RPC_CANTENCODEARGS; 
+        ret = RPC_CANTENCODEARGS;
         E("%08x:%08x error in xdr_args()\n",
           client->xdr->x_prog,
           client->xdr->x_vers);
@@ -334,7 +334,7 @@ clnt_call(
     pthread_cond_wait(&client->wait_reply, &client->wait_reply_lock);
     D("%08x:%08x received reply.\n", client->xdr->x_prog, client->xdr->x_vers);
 
-    if (((uint32 *)xdr->out_msg)[RPC_OFFSET] != 
+    if (((uint32 *)xdr->out_msg)[RPC_OFFSET] !=
         ((uint32 *)xdr->in_msg)[RPC_OFFSET]) {
         E("%08x:%08x XID mismatch: got %d, expecting %d.\n",
           client->xdr->x_prog, client->xdr->x_vers,
@@ -410,7 +410,7 @@ bool_t xdr_recv_auth (xdr_s_type *xdr, opaque_auth *auth)
     if (!XDR_RECV_UINT (xdr, (unsigned *)&(auth->oa_length))) {
         return FALSE;
     }
-    
+
     if (auth->oa_length != 0) {
         /* We throw away the auth stuff--it's always the default. */
         auth->oa_base = NULL;
@@ -419,7 +419,7 @@ bool_t xdr_recv_auth (xdr_s_type *xdr, opaque_auth *auth)
         else
             return FALSE;
     }
-    
+
     return TRUE;
 } /* xdr_recv_auth */
 
@@ -526,7 +526,7 @@ CLIENT *clnt_create(
 
         pthread_mutex_lock(&rx_mutex);
 
-        snprintf(name, sizeof(name), "/dev/oncrpc/%08x:%08x",
+        snprintf(name, sizeof(name), "/dev/%08x:%08x",
                  (uint32_t)prog, (int)vers);
         client->xdr = xdr_init_common(name, 1 /* client XDR */);
         if (!client->xdr) {
@@ -618,7 +618,7 @@ void clnt_destroy(CLIENT *client) {
             D("stopped rx thread\n");
         }
         pthread_mutex_unlock(&rx_mutex); /* sync access to the client list */
- 
+
         pthread_mutex_destroy(&client->input_xdr_lock);
         pthread_cond_destroy(&client->input_xdr_wait);
 
@@ -627,14 +627,14 @@ void clnt_destroy(CLIENT *client) {
         xdr_destroy_common(client->xdr);
 
         // FIXME: what happens when we lock the client while destroying it,
-        // and another thread locks the mutex in clnt_call, and then we 
+        // and another thread locks the mutex in clnt_call, and then we
         // call pthread_mutex_destroy?  Does destroy automatically unlock and
         // then cause the lock in clnt_call() to return an error?  When we
         // unlock the mutex here there can be a context switch to the other
         // thread, which will cause it to obtain the mutex on the destroyed
         // client (and probably crash), and then we get to the destroy call
         // here... will that call fail?
-        pthread_mutex_unlock(&client->lock);        
+        pthread_mutex_unlock(&client->lock);
         pthread_mutex_destroy(&client->lock);
         pthread_mutexattr_destroy(&client->lock_attr);
         D("client destroy done\n");

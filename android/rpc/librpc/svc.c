@@ -65,7 +65,7 @@ typedef struct registered_server_struct {
     /* Because the xdr is NULL for callback clients (as opposed to true
        servers), we keep track of the program number and version number in this
        structure as well.
-    */       
+    */
     rpcprog_t x_prog; /* program number */
     rpcvers_t x_vers; /* program version */
 
@@ -158,7 +158,7 @@ SVCXPRT *svcrtr_create (void)
 //                                    PTHREAD_MUTEX_RECURSIVE);
             pthread_mutex_init(&xprt->lock, &xprt->lock_attr);
         }
-    }    
+    }
     pthread_mutex_unlock(&xprt_lock);
     return xprt;
 }
@@ -169,7 +169,7 @@ void svc_destroy(SVCXPRT *xprt)
 }
 
 /* NOTE: this function must always be called with the xprt->lock held! */
-static registered_server* svc_find_nosync(SVCXPRT *xprt, 
+static registered_server* svc_find_nosync(SVCXPRT *xprt,
                                           rpcprog_t prog, rpcvers_t vers,
                                           registered_server **prev)
 {
@@ -184,7 +184,7 @@ static registered_server* svc_find_nosync(SVCXPRT *xprt,
     return trav;
 }
 
-registered_server* svc_find(SVCXPRT *xprt, 
+registered_server* svc_find(SVCXPRT *xprt,
                             rpcprog_t prog, rpcvers_t vers)
 {
     pthread_mutex_lock(&xprt->lock);
@@ -193,7 +193,7 @@ registered_server* svc_find(SVCXPRT *xprt,
     return svc;
 }
 
-bool_t svc_register (SVCXPRT *xprt, rpcprog_t prog, rpcvers_t vers, 
+bool_t svc_register (SVCXPRT *xprt, rpcprog_t prog, rpcvers_t vers,
                      __dispatch_fn_t dispatch,
                      rpcprot_t protocol)
 {
@@ -227,10 +227,10 @@ bool_t svc_register (SVCXPRT *xprt, rpcprog_t prog, rpcvers_t vers,
           "creating dummy service entry!\n", (uint32_t)prog, (int)vers);
         svc->xdr = NULL;
         svc->x_prog = prog;
-        svc->x_vers = vers;        
+        svc->x_vers = vers;
     } else {
         V("RPC server %08x:%d is a real server.\n", (uint32_t)prog, (int)vers);
-        svc->xdr = xdr_init_common("/dev/oncrpc/00000000:0",
+        svc->xdr = xdr_init_common("/dev/00000000:0",
                                    0 /* not a client XDR */);
         if (svc->xdr == NULL) {
             E("failed to initialize service (permissions?)!\n");
@@ -240,11 +240,11 @@ bool_t svc_register (SVCXPRT *xprt, rpcprog_t prog, rpcvers_t vers,
         }
 
         args.prog = prog;
-        args.vers = vers;    
+        args.vers = vers;
         V("RPC server %08x:%d: registering with kernel.\n",
           (uint32_t)prog, (int)vers);
-        if (r_control(svc->xdr->fd, 
-                      RPC_ROUTER_IOCTL_REGISTER_SERVER, 
+        if (r_control(svc->xdr->fd,
+                      RPC_ROUTER_IOCTL_REGISTER_SERVER,
                       &args) < 0) {
             E("ioctl(RPC_ROUTER_IOCTL_REGISTER_SERVER) failed: %s!\n",
               strerror(errno));
@@ -257,7 +257,7 @@ bool_t svc_register (SVCXPRT *xprt, rpcprog_t prog, rpcvers_t vers,
         FD_SET(svc->xdr->fd, &xprt->fdset);
         if (svc->xdr->fd > xprt->max_fd) xprt->max_fd = svc->xdr->fd;
         svc->x_prog = svc->xdr->x_prog = prog;
-        svc->x_vers = svc->xdr->x_vers = vers;        
+        svc->x_vers = svc->xdr->x_vers = vers;
     }
 
     svc->dispatch = dispatch;
@@ -285,11 +285,11 @@ void svc_unregister (SVCXPRT *xprt, rpcprog_t prog, rpcvers_t vers) {
     if (found) {
         struct rpcrouter_ioctl_server_args args;
         if (prev) {
-            V("RPC server %08x:%d is not the first in the list\n", 
+            V("RPC server %08x:%d is not the first in the list\n",
               (unsigned)prog, (unsigned)vers);
             prev->next = found->next;
         } else {
-            V("RPC server %08x:%d the first in the list\n", 
+            V("RPC server %08x:%d the first in the list\n",
               (unsigned)prog, (unsigned)vers);
             xprt->servers = found->next;
         }
@@ -303,21 +303,21 @@ void svc_unregister (SVCXPRT *xprt, rpcprog_t prog, rpcvers_t vers) {
                  * minimum.
                  */
                 args.prog = prog;
-                args.vers = vers;    
+                args.vers = vers;
                 if (r_control(found->xdr->fd,
                               RPC_ROUTER_IOCTL_UNREGISTER_SERVER,
                               &args) < 0) {
                     E("ioctl(RPC_ROUTER_IOCTL_UNREGISTER_SERVER) "
-                      "failed: %s!\n", 
+                      "failed: %s!\n",
                       strerror(errno));
-                }                
+                }
                 FD_CLR(found->xdr->fd, &xprt->fdset);
             }
             V("RPC server %08x:%d: destroying XDR\n",
                    (unsigned)prog, (unsigned)vers);
             xdr_destroy_common(found->xdr);
         }
-        else V("RPC server %08x:%d does not have an associated XDR\n", 
+        else V("RPC server %08x:%d does not have an associated XDR\n",
                (unsigned)prog, (unsigned)vers);
 
         free(found);
@@ -331,10 +331,10 @@ void svc_unregister (SVCXPRT *xprt, rpcprog_t prog, rpcvers_t vers) {
     pthread_mutex_unlock(&xprt->lock);
 }
 
-/* 
-RPC_OFFSET + 
+/*
+RPC_OFFSET +
 0  00000000 RPC xid                 network-byte order
-1  00000000 RPC call 
+1  00000000 RPC call
 2  00000002 rpc version
 3  3000005d prog num
 4  00000000 prog vers
@@ -346,7 +346,7 @@ RPC_OFFSET +
 9  00000000 verf
 
 a  0001fcc1 parms...
-b  00354230 
+b  00354230
 c  00000000
  */
 
@@ -359,7 +359,7 @@ void svc_dispatch(registered_server *svc, SVCXPRT *xprt)
        arriving on this channel must be an RPC call.  Also, the program and
        program-version numbers must match what's in the XDR of the service. */
 
-    D("reading on fd %d for %08x:%d\n", 
+    D("reading on fd %d for %08x:%d\n",
       svc->xdr->fd, svc->x_prog, svc->x_vers);
 
     uint32 prog = ntohl(((uint32 *)(svc->xdr->in_msg))[RPC_OFFSET+3]);
@@ -395,7 +395,7 @@ void svc_dispatch(registered_server *svc, SVCXPRT *xprt)
        long words.  This the offset (RPC_OFFSET + 10)<<2 is where the first
        arguments start.
     */
-    svc->xdr->in_next = (RPC_OFFSET + 6 + 4)*sizeof(uint32); 
+    svc->xdr->in_next = (RPC_OFFSET + 6 + 4)*sizeof(uint32);
 
     svc->active = getpid();
     svc->xdr->x_op = XDR_DECODE;
@@ -446,7 +446,7 @@ void xprt_unregister (SVCXPRT *xprt)
 }
 
 /* The functions that follow all take a pointer to the SVCXPRT instead of the
-   XDR of the server that they refer to.  The xprt pointer is actually a 
+   XDR of the server that they refer to.  The xprt pointer is actually a
    pointer to a registered_server, which identified the RPC server in
    question.
 */
@@ -455,7 +455,7 @@ bool_t svc_getargs(SVCXPRT *xprt, xdrproc_t xdr_args, caddr_t args_ptr)
 {
     registered_server *serv = (registered_server *)xprt;
     if (serv->active) {
-        bool_t result = (bool_t) (*xdr_args)(serv->xdr, args_ptr);            
+        bool_t result = (bool_t) (*xdr_args)(serv->xdr, args_ptr);
         XDR_MSG_DONE (serv->xdr);
         return result;
     }
@@ -465,7 +465,7 @@ bool_t svc_getargs(SVCXPRT *xprt, xdrproc_t xdr_args, caddr_t args_ptr)
 bool_t svc_freeargs (SVCXPRT * xprt, xdrproc_t xdr_args, caddr_t args_ptr)
 {
     registered_server *serv = (registered_server *)xprt;
-    if (serv->active) { 
+    if (serv->active) {
         serv->xdr->x_op = XDR_FREE;
         return (*xdr_args)((XDR *)serv->xdr, args_ptr);
     }
@@ -478,15 +478,15 @@ svc_sendreply (SVCXPRT *xprt, xdrproc_t xdr_results,
                caddr_t xdr_location)
 {
     registered_server *serv = (registered_server *)xprt;
-    if (serv->active) { 
-        opaque_auth verf; 
+    if (serv->active) {
+        opaque_auth verf;
         verf.oa_flavor = AUTH_NONE;
         verf.oa_length = 0;
-        
+
         serv->xdr->x_op = XDR_ENCODE;
-        
+
         if (!xdr_reply_msg_start(serv->xdr, &verf) ||
-            !xdr_results(serv->xdr, xdr_location)) 
+            !xdr_results(serv->xdr, xdr_location))
             return FALSE;
 
         ((uint32 *)(serv->xdr->out_msg))[RPC_OFFSET] =
@@ -511,12 +511,12 @@ svc_sendreply (SVCXPRT *xprt, xdrproc_t xdr_results,
 void svcerr_decode (SVCXPRT *xprt)
 {
     registered_server *serv = (registered_server *)xprt;
-    if (serv->active) { 
+    if (serv->active) {
         rpc_reply_header reply;
         reply.stat = RPC_MSG_ACCEPTED;
         reply.u.ar.verf = serv->xdr->verf;
         reply.u.ar.stat = RPC_GARBAGE_ARGS;
-        
+
         if (!SVCERR_XDR_SEND(serv->xdr, reply))
             /* Couldn't send the reply - just give up */
             XDR_MSG_ABORT(serv->xdr);
@@ -526,12 +526,12 @@ void svcerr_decode (SVCXPRT *xprt)
 void svcerr_systemerr (SVCXPRT *xprt)
 {
     registered_server *serv = (registered_server *)xprt;
-    if (serv->active) { 
+    if (serv->active) {
         rpc_reply_header reply;
         reply.stat = RPC_MSG_ACCEPTED;
         reply.u.ar.verf = serv->xdr->verf;
         reply.u.ar.stat = RPC_SYSTEM_ERR;
-        
+
         if (!SVCERR_XDR_SEND(serv->xdr, reply))
             /* Couldn't send the reply - just give up */
             XDR_MSG_ABORT(serv->xdr);
@@ -541,14 +541,14 @@ void svcerr_systemerr (SVCXPRT *xprt)
 void svcerr_noproc(SVCXPRT *xprt)
 {
     registered_server *serv = (registered_server *)xprt;
-    if (serv->active) { 
-        rpc_reply_header reply;        
+    if (serv->active) {
+        rpc_reply_header reply;
         reply.stat = RPC_MSG_ACCEPTED;
         reply.u.ar.verf = serv->xdr->verf;
         reply.u.ar.stat = RPC_PROC_UNAVAIL;
-        
+
         if (!SVCERR_XDR_SEND(serv->xdr, reply))
             /* Couldn't send the reply - just give up */
-            XDR_MSG_ABORT(serv->xdr);        
+            XDR_MSG_ABORT(serv->xdr);
     }
 } /* svcerr_noproc */
