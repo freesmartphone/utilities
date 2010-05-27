@@ -5,8 +5,11 @@ AM_CPPFLAGS = \
 	-I. \
 	-I.. \
 	-O0 -fno-short-enums \
-	-DRPC_OFFSET=0 \
-	-DDEBUG -DVERBOSE
+	-DRPC_OFFSET=0
+
+if WANT_DEBUG
+AM_CPPFLAGS += -DDEBUG -DVERBOSE
+endif
 
 lib_LTLIBRARIES = librpc.la
 

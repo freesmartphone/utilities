@@ -4,9 +4,7 @@ MAINTAINERCLEANFILES = Makefile.in
 AM_CPPFLAGS = \
 	-I. \
 	-I.. \
-	-O0 -fno-short-enums \
-	-DRPC_OFFSET=0 \
-	-DDEBUG -DVERBOSE
+	-O0 -fno-short-enums
 
 bin_PROGRAMS = gps
 

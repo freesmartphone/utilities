@@ -11,6 +11,13 @@ AC_STDC_HEADERS
 AC_PROG_LIBTOOL
 AC_LIBTOOL_DLOPEN
 
+# check for debugging
+AC_ARG_ENABLE(debug,
+  [  --enable-debug            Enable debug build (default=disabled)],
+  [debug=$enableval],
+  [debug="no"])
+AM_CONDITIONAL( [WANT_DEBUG], [test x"$debug" = x"yes"])
+
 # output
 AC_CONFIG_FILES([
 	Makefile
@@ -19,3 +26,22 @@ AC_CONFIG_FILES([
 ])
 
 AC_OUTPUT
+
+# info
+echo
+echo
+echo
+echo "------------------------------------------------------------------------"
+echo "$PACKAGE_NAME $PACKAGE_VERSION"
+echo "------------------------------------------------------------------------"
+echo
+echo "Configuration Options:"
+echo
+echo "  debug build.............: $debug"
+echo
+echo "  prefix..................: $prefix"
+echo
+echo "------------------------------------------------------------------------"
+echo
+echo "Now type 'make' to compile and 'make install' to install this package."
+
