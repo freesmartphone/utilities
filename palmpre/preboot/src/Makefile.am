@@ -16,6 +16,7 @@ VALAC_ARGS = \
 	--pkg ecore \
 	--pkg edje \
 	--pkg gee-1.0 \
+	--pkg linux \
 	--save-temps \
 	--basedir $(top_srcdir)
 
