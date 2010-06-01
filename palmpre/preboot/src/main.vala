@@ -1,26 +1,26 @@
 /**
- * (C) 2010 Simon Busch <morphis@gravedo.de>
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
- *
- **/
+* (C) 2010 Simon Busch <morphis@gravedo.de>
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+*
+**/
 
 using Gee;
 
 namespace preboot {
-	
+
 public class BootConfiguration {
 	public string title { get; set; }
 	public string description { get; set; }
@@ -42,11 +42,13 @@ public class MainView {
 	const string desc_format = "list_desc_%i";
 	const string list_format = "list_bg_%i";
 
+	const string kexec_load = "kexec";
+	const string kexec_boot = "kexec --exec";
 
 	public Evas.Canvas evas {
 		get { return evas; }
 	}
-	
+
 	public EcoreEvas.Window window {
 		get { return _window; }
 	}
@@ -60,18 +62,18 @@ public class MainView {
 	}
 
 	public MainView() {
-		
+
 		FsoFramework.theLogger.info(@"using '$(_theme_path)' as theme");
 		selected = controller.defaultSelection;
 	}
 
 	public void create() {
-		 /* create a window */
+		/* create a window */
 		_window = new EcoreEvas.Window( "software_x11", 0, 0, 320, 480, null );
 		window.title_set( "preboot" );
 		window.show();
 		_evas = window.evas_get();
-		
+
 		/* create our main menu edje object */
 		_mainmenu = new Edje.Object( _evas );
 		_mainmenu.file_set( _controller.themePath, "main" );
@@ -272,7 +274,6 @@ public class MainController {
 		get; private set;
 	}
 
-
 	public Gee.AbstractList<BootConfiguration> configurations {
 		default = new Gee.ArrayList<BootConfiguration>();
 		get;
@@ -291,7 +292,7 @@ public class MainController {
 	public MainController() {
 		_mainView = new MainView();
 		_mainView.controller = this;
-		
+
 		_themePath = Config.PACKAGE_DATADIR + "/themes/default.edj";
 		_configPath = "/etc/preboot.conf";
 
@@ -310,7 +311,7 @@ public class MainController {
 		}
 		return ioc;
 	}
-	
+
 	public void loadConfiguration() {
 		FsoFramework.SmartKeyFile sf = new FsoFramework.SmartKeyFile();
 
@@ -359,7 +360,7 @@ public class MainController {
 		}
 		_mainView.bindBootConfiguration(configurations);
 	}
-	
+
 	public void init() {
 		Ecore.init();
 		EcoreEvas.init();
@@ -369,13 +370,13 @@ public class MainController {
 		loadConfiguration();
 		_mainView.connectCallbacks();
 	}
-	
+
 	public void run() {
 		message( "-> mainloop" );
 		Ecore.MainLoop.begin();
 		message( "<- mainloop" );
 	}
-	
+
 	public void shutdown() {
 		/* shutdown */
 		Edje.shutdown();
