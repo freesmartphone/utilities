@@ -154,7 +154,7 @@ int main (int argc, char *argv[])
 			use_stdout = 0;
 			break;
 		case 'h':
-			//print_help();
+			print_help();
 			return 0;
 		default:
 			break;

@@ -1,0 +1,25 @@
+read_tokens
+
+Description
+===========
+        read_tokens is a little utility to read so called 'tokens' from the
+        /dev/mmcblkp0 partition an store them in a smartkeyfile in /etc.
+
+
+Authors
+=======
+        see AUTHORS file
+
+
+Usage
+=====
+        Usage: read_tokens [options]
+    --input, -i   specify the input file (default: /dev/mmcblk0p1)
+    --output, -o  specifiy the output file (default: stdout)
+
+
+Report Bugs
+===========
+        If there is something wrong, please use to the freesmartphone.org trac:
+        http://trac.freesmartphone.org/report
+        Report a bug or look there for possible workarounds.
