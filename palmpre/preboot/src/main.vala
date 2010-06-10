@@ -36,6 +36,7 @@ public class MainView {
 	private Edje.Object _mainmenu;
 	private string _theme_path;
 	private TimeoutSource timeoutSource;
+        private TimeoutSource shutdownSource;
 	private int selected;
 
 	const string text_format = "list_text_%i";
@@ -106,30 +107,36 @@ public class MainView {
 	}
 
 	public bool onUp(IOChannel source, IOCondition condition) {
-		if( condition == IOCondition.IN && keyUsed(source, controller.up_key)) {
+		if( condition == IOCondition.IN && keyUsed(source, controller.up_key) == 1) {
 			up();
 		}
 		return true;
 	}
 
 	public bool onDown(IOChannel source, IOCondition condition) {
-		if( condition == IOCondition.IN && keyUsed(source, controller.down_key)) {
+		if( condition == IOCondition.IN && keyUsed(source, controller.down_key) == 1) {
 			down();
 		}
 		return true;
 	}
 
 	public bool onBoot(IOChannel source, IOCondition condition) {
-		if( condition == IOCondition.IN && keyUsed(source, controller.boot_key)) {
+		if( condition == IOCondition.IN && keyUsed(source, controller.boot_key) == 1) {
 			boot();
 		}
 		return true;
 	}
 
 	public bool onShutdown(IOChannel source, IOCondition condition) {
-                FsoFramework.theLogger.info("onShutdown");
-		if( condition == IOCondition.IN && keyUsed(source, controller.shutdown_key)) {
-                        shutdown();
+		if( condition == IOCondition.IN) {
+                        int used = keyUsed(source, controller.shutdown_key);
+                        if(used == 1 && shutdownSource == null) {
+			        shutdownSource = new TimeoutSource.seconds(3);
+			        shutdownSource.set_callback(shutdown);
+			        shutdownSource.attach(MainContext.default());
+                        } else if (used == 0) {
+                                shutdownSource = null;
+                        }
 		}
 		return true;
 	}
@@ -241,7 +248,7 @@ public class MainView {
 		bootKernel();
 	}
 
-        private void shutdown() {
+        private bool shutdown() {
                 string out, err;
                 int status;
                 FsoFramework.theLogger.info("Shutting down system");
@@ -253,21 +260,21 @@ public class MainView {
                 catch (GLib.SpawnError e) {
                         FsoFramework.theLogger.info(@"Shutting down: $(e.message)");
                 }
+                return false;
         }
 
-	private bool keyUsed(IOChannel source, uint16 key, int value = 0) {
+	private int keyUsed(IOChannel source, uint16 key) {
 		Linux.Input.Event event = {};
 		var bytesread = Posix.read(source.unix_get_fd(), &event, sizeof(Linux.Input.Event));
 
 		if(bytesread < sizeof(Linux.Input.Event))
-			return false;
+			return -1;
 
 		if(event.type == Linux.Input.EV_KEY && 
-			event.code == key &&
-			event.value == value) {
-			return true;
+			event.code == key) {
+			return event.value;
 		}
-		return false;
+		return -1;
 	}
 }
 
