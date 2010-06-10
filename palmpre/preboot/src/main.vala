@@ -126,6 +126,14 @@ public class MainView {
 		return true;
 	}
 
+	public bool onShutdown(IOChannel source, IOCondition condition) {
+                FsoFramework.theLogger.info("onShutdown");
+		if( condition == IOCondition.IN && keyUsed(source, controller.shutdown_key)) {
+                        shutdown();
+		}
+		return true;
+	}
+
 	private void onItemSelected( Edje.Object obj, string emission, string source) {
 		FsoFramework.theLogger.info(@"$(source) clicked");
 		if(timeoutSource != null) {
@@ -233,7 +241,21 @@ public class MainView {
 		bootKernel();
 	}
 
-	private bool keyUsed(IOChannel source, uint16 key) {
+        private void shutdown() {
+                string out, err;
+                int status;
+                FsoFramework.theLogger.info("Shutting down system");
+                try {
+                        _mainmenu.part_text_set("info_text", "Shutting down");
+                        Process.spawn_sync(null, controller.shutdown_cmd, null, 0, null, out out, out err, out status);
+                        controller.shutdown();
+                }
+                catch (GLib.SpawnError e) {
+                        FsoFramework.theLogger.info(@"Shutting down: $(e.message)");
+                }
+        }
+
+	private bool keyUsed(IOChannel source, uint16 key, int value = 0) {
 		Linux.Input.Event event = {};
 		var bytesread = Posix.read(source.unix_get_fd(), &event, sizeof(Linux.Input.Event));
 
@@ -242,7 +264,7 @@ public class MainView {
 
 		if(event.type == Linux.Input.EV_KEY && 
 			event.code == key &&
-			event.value == 0) {
+			event.value == value) {
 			return true;
 		}
 		return false;
@@ -256,6 +278,7 @@ public class MainController {
 	private IOChannel up_channel;
 	private IOChannel down_channel;
 	private IOChannel boot_channel;
+        private IOChannel shutdown_channel;
 	const string input_base = "/dev/input";
 
 	public int num_items = 0;
@@ -270,9 +293,17 @@ public class MainController {
 		get; private set;
 	}
 
+	public uint16 shutdown_key {
+		get; private set;
+	}
+
 	public string kexec {
 		get; private set;
 	}
+
+        public string[] shutdown_cmd {
+                get; private set;
+        }
 
 	public Gee.AbstractList<BootConfiguration> configurations {
 		default = new Gee.ArrayList<BootConfiguration>();
@@ -333,8 +364,6 @@ public class MainController {
 			defaultSelection = sf.intValue("general", "default", 0);
 
 			kexec = sf.stringValue("general", "kexec", "/sbin/kexec");
-			FsoFramework.theLogger.info(@"kexec cmd:");
-			FsoFramework.theLogger.info(@"kexec cmd: $(kexec)");
 
 			FsoFramework.theLogger.info("Setting up up key");
 			var up = sf.stringListValue("general", "up_key", {"event0", Linux.Input.KEY_UP.to_string()});
@@ -353,6 +382,12 @@ public class MainController {
 			var boot = sf.stringListValue("general", "boot_key", {"event0", Linux.Input.KEY_ENTER.to_string()});
 			boot_key = (uint16)boot[1].to_int();
 			boot_channel = setupIOChannel(boot[0],_mainView.onBoot);
+
+                        var shutdown = sf.stringListValue("general", "shutdown_key", {"event0", Linux.Input.KEY_ESC.to_string()});
+                        shutdown_key = (uint16)shutdown[1].to_int();
+                        shutdown_channel = setupIOChannel(shutdown[0], _mainView.onShutdown);
+
+                        shutdown_cmd = sf.stringListValue("general", "shutdown", { "shutdown", "-h", "now"});
 		}
 		else
 		{
@@ -379,6 +414,7 @@ public class MainController {
 
 	public void shutdown() {
 		/* shutdown */
+                Ecore.MainLoop.quit();
 		Edje.shutdown();
 		EcoreEvas.shutdown();
 	}
