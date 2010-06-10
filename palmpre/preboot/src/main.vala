@@ -257,6 +257,7 @@ public class MainController {
 	private IOChannel down_channel;
 	private IOChannel boot_channel;
 	const string input_base = "/dev/input";
+	private Gee.Map<string,IOChannel> channels = new Gee.HashMap<string,IOChannel>(str_hash, str_equal);
 
 	public int num_items = 0;
 	
@@ -302,9 +303,13 @@ public class MainController {
 		IOChannel ioc = null;
 		try
 		{
-			ioc = new IOChannel.file(Path.build_filename(input_base, input_name), "r");
+			ioc = channels[input_name];;
+			if( ioc == null ) {
+				FsoFramework.theLogger.info(@"setting up new IOChannel for $input_name");
+				ioc = new IOChannel.file(Path.build_filename(input_base, input_name), "r");
+				channels[input_name] = ioc;
+			}
 			ioc.add_watch( IOCondition.IN, func);
-
 		}
 		catch (FileError e) {
 			FsoFramework.theLogger.info(@"Cannot setup IOChannel on $(input_name): $(e.message)");
@@ -336,20 +341,15 @@ public class MainController {
 			FsoFramework.theLogger.info(@"kexec cmd:");
 			FsoFramework.theLogger.info(@"kexec cmd: $(kexec)");
 
-			FsoFramework.theLogger.info("Setting up up key");
 			var up = sf.stringListValue("general", "up_key", {"event0", Linux.Input.KEY_UP.to_string()});
-			foreach( var u in up )
-				FsoFramework.theLogger.info(@"up: $(u)");
 
 			up_key = (uint16)up[1].to_int();
 			up_channel = setupIOChannel(up[0],_mainView.onUp);
 
-			FsoFramework.theLogger.info("Setting up down key");
 			var down = sf.stringListValue("general", "down_key", {"event0", Linux.Input.KEY_DOWN.to_string()});
 			down_key = (uint16)down[1].to_int();
 			down_channel = setupIOChannel(down[0],_mainView.onDown);
 
-			FsoFramework.theLogger.info("Setting up boot key");
 			var boot = sf.stringListValue("general", "boot_key", {"event0", Linux.Input.KEY_ENTER.to_string()});
 			boot_key = (uint16)boot[1].to_int();
 			boot_channel = setupIOChannel(boot[0],_mainView.onBoot);
