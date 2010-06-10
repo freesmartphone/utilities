@@ -294,7 +294,7 @@ public class MainController {
 		_mainView.controller = this;
 
 		_themePath = Config.PACKAGE_DATADIR + "/themes/default.edj";
-		_configPath = "/etc/preboot.conf";
+		_configPath = "/boot/preboot.conf";
 
 	}
 
