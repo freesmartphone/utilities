@@ -220,14 +220,13 @@ public class MainView {
 		FsoFramework.theLogger.info(@"kexec: $(controller.kexec)");
 		params += controller.kexec;
 		params += "--load";
-		params += kernel;
 		if(cmdline != null) {
 			FsoFramework.theLogger.info(@"adding cmdline: '$(cmdline)'");
-			params += "--cmdline";
-			params += cmdline;
+			params += "--command-line=" + cmdline;
 		}
 		if(extra_args != null)
 			params += extra_args;
+		params += kernel;
 		return params;
 	}
 
