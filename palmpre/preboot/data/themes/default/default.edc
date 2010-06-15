@@ -1,6 +1,3 @@
-externals {
-   external: "elm";
-}
 
 collections {
    group { name: "main";
