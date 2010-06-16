@@ -152,6 +152,7 @@ public class MainView {
 				shutdownSource.set_callback(shutdown);
 				shutdownSource.attach(MainContext.default());
 			} else if (used == 0) {
+				shutdownSource.destroy();
 				shutdownSource = null;
 			}
 		}
