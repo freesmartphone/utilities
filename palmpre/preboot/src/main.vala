@@ -36,8 +36,9 @@ public class MainView {
 	private Edje.Object _mainmenu;
 	private string _theme_path;
 	private TimeoutSource timeoutSource;
-        private TimeoutSource shutdownSource;
-	private int selected;
+	private bool first = true;
+	private TimeoutSource shutdownSource;
+	private int _selected;
 
 	const string text_format = "list_text_%i";
 	const string desc_format = "list_desc_%i";
@@ -46,8 +47,24 @@ public class MainView {
 	const string kexec_load = "kexec";
 	const string kexec_boot = "kexec --exec";
 
+	public int selected {
+		get { return _selected; }
+		set {
+			FsoFramework.theLogger.info(@"selected: $value / $(controller.num_items)");
+			if (value != _selected) {
+				if (value < 0)
+					_selected = controller.num_items - 1;
+				else if (value >= controller.num_items)
+					_selected = 0;
+				else
+					_selected = value;
+				_mainmenu.signal_emit("mouse,up,1", list_format.printf(selected));
+			}
+		}
+	}
+
 	public Evas.Canvas evas {
-		get { return evas; }
+		get { return _evas; }
 	}
 
 	public EcoreEvas.Window window {
@@ -63,14 +80,11 @@ public class MainView {
 	}
 
 	public MainView() {
-
-		FsoFramework.theLogger.info(@"using '$(_theme_path)' as theme");
-		selected = controller.defaultSelection;
 	}
 
 	public void create() {
 		/* create a window */
-		_window = new EcoreEvas.Window( "fb", 0, 0, 320, 480, null );
+		_window = new EcoreEvas.Window( "software_x11", 0, 0, 320, 480, null );
 		window.title_set( "preboot" );
 		window.show();
 		_evas = window.evas_get();
@@ -80,18 +94,21 @@ public class MainView {
 		_mainmenu.file_set( _controller.themePath, "main" );
 		_mainmenu.resize( 320, 480 );
 		_mainmenu.layer_set( 0 );
-		_mainmenu.signal_emit("mouse,up,1", list_format.printf(controller.defaultSelection));
 		_mainmenu.show();
 	}
 
 	public void connectCallbacks() {
+		_mainmenu.signal_callback_add("mouse,up,1", "list_bg_*", onItemSelected);
+		_mainmenu.signal_callback_add("mouse,up,1", "boot_rect", onItemSelected);
+	}
+
+	public void connectTimeouts() {
 		if (controller.bootTimeout > 0) {
+			FsoFramework.theLogger.info(@"Connect timeout handler with timeout: $(controller.bootTimeout)");
 			timeoutSource = new TimeoutSource.seconds(1);
 			timeoutSource.set_callback(onBootTimeout);
 			timeoutSource.attach(MainContext.default());
 		}  
-		_mainmenu.signal_callback_add("mouse,up,1", "list_bg_*", onItemSelected);
-		_mainmenu.signal_callback_add("mouse,up,1", "boot_rect", onItemSelected);
 	}
 	
 	public void bindBootConfiguration(Gee.AbstractList<BootConfiguration> bootConfigurations) {
@@ -128,33 +145,36 @@ public class MainView {
 	}
 
 	public bool onShutdown(IOChannel source, IOCondition condition) {
-		if( condition == IOCondition.IN) {
-                        int used = keyUsed(source, controller.shutdown_key);
-                        if(used == 1 && shutdownSource == null) {
-			        shutdownSource = new TimeoutSource.seconds(3);
-			        shutdownSource.set_callback(shutdown);
-			        shutdownSource.attach(MainContext.default());
-                        } else if (used == 0) {
-                                shutdownSource = null;
-                        }
+		if(condition == IOCondition.IN) {
+			int used = keyUsed(source, controller.shutdown_key);
+			if(used == 1 && shutdownSource == null) {
+				shutdownSource = new TimeoutSource.seconds(3);
+				shutdownSource.set_callback(shutdown);
+				shutdownSource.attach(MainContext.default());
+			} else if (used == 0) {
+				shutdownSource = null;
+			}
 		}
 		return true;
 	}
 
 	private void onItemSelected( Edje.Object obj, string emission, string source) {
 		FsoFramework.theLogger.info(@"$(source) clicked");
-		if(timeoutSource != null) {
-			FsoFramework.theLogger.debug("removing source");
-			timeoutSource.destroy();
-			timeoutSource = null;
-			_mainmenu.part_text_set("info_text", "");
+		if(!first) {
+			if(timeoutSource != null) {
+				FsoFramework.theLogger.info("removing source");
+				timeoutSource.destroy();
+				timeoutSource = null;
+				_mainmenu.part_text_set("info_text", "");
+			}
+			if(source.has_prefix("list_bg_")) {
+				selected = source.split("_")[2].to_int();
+			} else if(source == "boot_rect") {
+				loadKernel();
+				bootKernel();
+			}
 		}
-		if(source.has_prefix("list_bg_")) {
-			selected = source.split("_")[2].to_int();
-		} else if(source == "boot_rect") {
-			loadKernel();
-			bootKernel();
-		}
+		first = false;
 	}
 
 	private void bootKernel() {
@@ -184,11 +204,7 @@ public class MainView {
 		var config = controller.configurations[selected];
 		FsoFramework.theLogger.info(@"cmdline: $(config.cmdline) args: $(config.extra_args) kernel: $(config.kernel)");
 		var cmd = createLoadCmd(config.kernel, config.cmdline, config.extra_args);
-		foreach (var c in cmd)
-			FsoFramework.theLogger.info(@"cmd $c");
-		var params = string.joinv(" ", cmd);
-		FsoFramework.theLogger.info(@"load cmd: kexec $(params)");
-		FsoFramework.theLogger.info("load cmd: kexec %p".printf(params));
+
 		try
 		{
 			Process.spawn_sync(null, cmd, null,0, null, out out, out err, out status);
@@ -203,11 +219,11 @@ public class MainView {
 	}
 
 	private bool onBootTimeout() {
-		debug(@"timeout: $(controller.bootTimeout)");
+		FsoFramework.theLogger.info(@"timeout: $(controller.bootTimeout)");
 		controller.bootTimeout --;
 		_mainmenu.part_text_set("info_text", @"Booting in $(controller.bootTimeout) seconds");
 		if(controller.bootTimeout == 0) {
-			debug("Timeout reached");
+			FsoFramework.theLogger.info("Timeout reached");
 			loadKernel();
 			bootKernel();
 			return false;
@@ -232,14 +248,10 @@ public class MainView {
 
 	private void up() {
 		selected --;
-		if(selected == -1 )
-			selected = controller.num_items -1;
-		_mainmenu.signal_emit("mouse,up,1", list_format.printf(selected));
 	}
 
 	private void down() {
-		selected = (selected + 1) % controller.num_items;
-		_mainmenu.signal_emit("mouse,up,1", list_format.printf(selected));
+		selected ++;
 	}
 
 	private void boot() {
@@ -247,20 +259,20 @@ public class MainView {
 		bootKernel();
 	}
 
-        private bool shutdown() {
-                string out, err;
-                int status;
-                FsoFramework.theLogger.info("Shutting down system");
-                try {
-                        _mainmenu.part_text_set("info_text", "Shutting down");
-                        Process.spawn_sync(null, controller.shutdown_cmd, null, 0, null, out out, out err, out status);
-                        controller.shutdown();
-                }
-                catch (GLib.SpawnError e) {
-                        FsoFramework.theLogger.info(@"Shutting down: $(e.message)");
-                }
-                return false;
-        }
+	private bool shutdown() {
+		string out, err;
+		int status;
+		FsoFramework.theLogger.info("Shutting down system");
+		try {
+			_mainmenu.part_text_set("info_text", "Shutting down");
+			Process.spawn_sync(null, controller.shutdown_cmd, null, 0, null, out out, out err, out status);
+			controller.shutdown();
+		}
+		catch (GLib.SpawnError e) {
+			FsoFramework.theLogger.info(@"Shutting down: $(e.message)");
+		}
+		return false;
+	}
 
 	private int keyUsed(IOChannel source, uint16 key) {
 		Linux.Input.Event event = {};
@@ -284,7 +296,7 @@ public class MainController {
 	private IOChannel up_channel;
 	private IOChannel down_channel;
 	private IOChannel boot_channel;
-        private IOChannel shutdown_channel;
+	private IOChannel shutdown_channel;
 	const string input_base = "/dev/input";
 
 	public int num_items = 0;
@@ -307,9 +319,9 @@ public class MainController {
 		get; private set;
 	}
 
-        public string[] shutdown_cmd {
-                get; private set;
-        }
+	public string[] shutdown_cmd {
+		get; private set;
+	}
 
 	public Gee.AbstractList<BootConfiguration> configurations {
 		default = new Gee.ArrayList<BootConfiguration>();
@@ -367,14 +379,12 @@ public class MainController {
 			}
 
 			bootTimeout = sf.intValue("general", "boot_timeout", -1);
-			defaultSelection = sf.intValue("general", "default", 0);
+			_mainView.selected = sf.intValue("general", "default", 0);
 
 			kexec = sf.stringValue("general", "kexec", "/sbin/kexec");
 
 			FsoFramework.theLogger.info("Setting up up key");
 			var up = sf.stringListValue("general", "up_key", {"event0", Linux.Input.KEY_UP.to_string()});
-			foreach( var u in up )
-				FsoFramework.theLogger.info(@"up: $(u)");
 
 			up_key = (uint16)up[1].to_int();
 			up_channel = setupIOChannel(up[0],_mainView.onUp);
@@ -389,11 +399,11 @@ public class MainController {
 			boot_key = (uint16)boot[1].to_int();
 			boot_channel = setupIOChannel(boot[0],_mainView.onBoot);
 
-                        var shutdown = sf.stringListValue("general", "shutdown_key", {"event0", Linux.Input.KEY_ESC.to_string()});
-                        shutdown_key = (uint16)shutdown[1].to_int();
-                        shutdown_channel = setupIOChannel(shutdown[0], _mainView.onShutdown);
+			var shutdown = sf.stringListValue("general", "shutdown_key", {"event0", Linux.Input.KEY_ESC.to_string()});
+			shutdown_key = (uint16)shutdown[1].to_int();
+			shutdown_channel = setupIOChannel(shutdown[0], _mainView.onShutdown);
 
-                        shutdown_cmd = sf.stringListValue("general", "shutdown", { "shutdown", "-h", "now"});
+			shutdown_cmd = sf.stringListValue("general", "shutdown", { "shutdown", "-h", "now"});
 		}
 		else
 		{
@@ -408,8 +418,9 @@ public class MainController {
 		Edje.init();
 
 		_mainView.create();
-		loadConfiguration();
 		_mainView.connectCallbacks();
+		loadConfiguration();
+		_mainView.connectTimeouts();
 	}
 
 	public void run() {
@@ -420,7 +431,7 @@ public class MainController {
 
 	public void shutdown() {
 		/* shutdown */
-                Ecore.MainLoop.quit();
+		Ecore.MainLoop.quit();
 		Edje.shutdown();
 		EcoreEvas.shutdown();
 	}
