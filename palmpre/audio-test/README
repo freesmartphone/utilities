@@ -1,0 +1,26 @@
+audio-test
+
+Description
+===========
+        audio-test is a little utility to load audio script into the kernel and
+        execute them later through a sysfs entry.
+
+
+Authors
+=======
+        see AUTHORS file
+
+
+Usage
+=====
+        Usage: audio-test OPTION FILE
+         -l --load-script <filename>   load script <filename> into kernel
+         -s --script <name>        run script <name>
+         -h --help         print this help
+
+
+Report Bugs
+===========
+        If there is something wrong, please use to the freesmartphone.org trac:
+        http://trac.freesmartphone.org/report
+        Report a bug or look there for possible workarounds.

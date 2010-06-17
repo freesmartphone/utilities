@@ -1,4 +1,4 @@
-/* 
+/*
  * (c) 2009 by Simon Busch <morphis@gravedo.de>
  * All Rights Reserved
  *
@@ -47,7 +47,7 @@ static void load_script(char *script_filename)
 
 	while (1) {
 		len = read(script_fd, buffer, 4096);
-		if (len > 0) 
+		if (len > 0)
 			write(fd, buffer, len);
 		else if (len < 0)
 			perror("read()");
