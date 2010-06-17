@@ -84,7 +84,7 @@ public class MainView {
 
 	public void create() {
 		/* create a window */
-		_window = new EcoreEvas.Window( "software_x11", 0, 0, 320, 480, null );
+		_window = new EcoreEvas.Window( "fb", 0, 0, 320, 480, null );
 		window.title_set( "preboot" );
 		window.show();
 		_evas = window.evas_get();
