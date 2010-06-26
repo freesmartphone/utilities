@@ -30,17 +30,17 @@ namespace PalmPre.Hsuart
     [CCode (cname = "int", has_type_id = false, cprefix = "HSUART_MODE_", cheader_filename = "hsuart.h")]
     public enum FlagType 
     {
-        HSUART_MODE_LOOPBACK,
-        HSUART_MODE_FLOW_CTRL_BIT,
-        HSUART_MODE_FLOW_CTRL_MASK,
-        HSUART_MODE_FLOW_CTRL_NONE,
-        HSUART_MODE_FLOW_CTRL_HW,
-        HSUART_MODE_FLOW_CTRL_SW,
-        HSUART_MODE_PARITY_BIT,
-        HSUART_MODE_PARITY_MASK,
-        HSUART_MODE_PARITY_NONE,
-        HSUART_MODE_PARITY_ODD,
-        HSUART_MODE_PARITY_EVEN,
+        LOOPBACK,
+        FLOW_CTRL_BIT,
+        FLOW_CTRL_MASK,
+        FLOW_CTRL_NONE,
+        FLOW_CTRL_HW,
+        FLOW_CTRL_SW,
+        PARITY_BIT,
+        PARITY_MASK,
+        PARITY_NONE,
+        PARITY_ODD,
+        PARITY_EVEN,
     }
     
     /*
