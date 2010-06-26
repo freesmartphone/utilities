@@ -1,4 +1,4 @@
-AC_INIT([palmpre-system-deps], [0.0.0], [morphis@gravedo.de], [palmpre-system-deps])
+AC_INIT([palmpre-system-deps], [0.1.0], [morphis@gravedo.de], [palmpre-system-deps])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE([dist-bzip2])
