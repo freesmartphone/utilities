@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+
+Name: palmpre-system-deps
+Description: various dependencies for developing software for the palm pre device
+Version: @VERSION@
+Requires: 
+Libs:
+Cflags: -I${includedir}/
