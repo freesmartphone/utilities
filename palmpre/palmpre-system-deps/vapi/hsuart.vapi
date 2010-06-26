@@ -22,9 +22,9 @@ namespace PalmPre.Hsuart
     [CCode (cname = "int", has_type_id = false, cprefix = "HSUART_", cheader_filename = "hsuart.h")]
     public enum SpeedType
     {
-        SPEED_38K
-        SPEED_115K
-        SPEED_3686K
+        SPEED_38K,
+        SPEED_115K,
+        SPEED_3686K,
     }
 
     [CCode (cname = "int", has_type_id = false, cprefix = "HSUART_MODE_", cheader_filename = "hsuart.h")]
