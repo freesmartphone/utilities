@@ -6,6 +6,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 AC_CONFIG_FILES([
   Makefile
+  palmpre-system-deps-1.0.pc
   src/Makefile
   vapi/Makefile])
 
