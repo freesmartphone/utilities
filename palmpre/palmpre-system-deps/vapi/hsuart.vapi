@@ -86,17 +86,17 @@ namespace PalmPre.Hsuart
     }
     
     [CCode (cname = "struct hsuart_mode", cheader_filename = "hsuart.h")]
-    public class Mode
+    public struct Mode
     {
-        public SpeedType speed { get; set; default = SpeedType.SPEED_115K; }
-        public int flags { get; set; }
+        public int speed;
+        public int flags;
     }
     
     [CCode (cname = "struct hsuart_stat", cheader_filename = "hsuart.h")]
-    public class Stat
+    public struct Stat
     {
-        public ulong tx_bytes { get; set; default = 0; }
-        public ulong rx_bytes { get; set; default = 0; }
-        public ulong rx_dropped { get; set; default = 0; }
+        public ulong tx_bytes;
+        public ulong rx_bytes;
+        public ulong rx_dropped;
     }
 } // namespace PalmPre.Hsuart
