@@ -48,15 +48,10 @@ namespace PalmPre.Hsuart
      */
 
     [CCode (cname = "int", has_type_id = false, cprefix = "HSUART_", cheader_filename = "hsuart.h")]
-    public enum FifoType
+    public enum FlushType
     {
         RX_FIFO,
         TX_FIFO,
-    }
-    
-    [CCode (cname = "int", has_type_id = false, cprefix = "HSUART_", cheader_filename = "hsuart.h")]
-    public enum QueueType
-    {
         RX_QUEUE,
         TX_QUEUE,
     }
