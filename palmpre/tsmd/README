@@ -1,0 +1,50 @@
+tsmd -- Touchscreen management daemon
+
+Description
+===========
+        tsmd is a simple touchscreen management daemon.
+        It can connect to a real device node (/dev/touchscreen) or over a TCP
+        network connection with the serial_forward tool available in Cornucopia
+        Git repo (tools/serial_forward).
+        Raw data from device node are then converted and filtered as needed
+        via tslib library.
+        Received events are finally sent to an userspace input device node.
+
+
+Authors
+=======
+        see AUTHORS file
+
+
+Usage
+=====
+        Usage: tsmd [options]
+
+          --addr, -a  specify the network address for TCP network connection
+          --port, -p  specify the network port for TCP network connection
+          --node, -n  specify a real device node (like /dev/touchscreen)
+          --foreground, -f  run program in foreground instead of as a deamon
+
+        Examples
+        ========
+
+        Run tsmd on Palm Pre device
+        ---------------------------
+
+        palmpre# tsmd -n /dev/touchscreen
+
+        Run tsmd on local PC
+        --------------------
+
+        palmpre# serial_forward -n /dev/touchscreen -p 3001 -t cy8mrln
+
+        local# export TSLIB_PLUGINDIR=/usr/lib/ts0/
+        local# export TSLIB_CONFFILE=/etc/ts.conf
+        local# tsmd -a 192.168.0.202 -p 3001
+
+
+Report Bugs
+===========
+        If there is something wrong, please use to the freesmartphone.org trac:
+        http://trac.freesmartphone.org/report
+        Report a bug or look there for possible workarounds.
