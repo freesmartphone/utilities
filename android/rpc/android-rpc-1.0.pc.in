@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+
+Name: librpc
+Description: Android ARM9 RPC Library
+Version: @VERSION@
+Requires:
+Libs: -L${libdir} -lrpc
+Cflags: -I${includedir}/gsm0710mux-1.0

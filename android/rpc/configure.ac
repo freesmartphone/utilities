@@ -23,6 +23,7 @@ AC_CONFIG_FILES([
 	Makefile
 	librpc/Makefile
 	gps/Makefile
+	android-rpc-1.0.pc
 ])
 
 AC_OUTPUT
