@@ -1,5 +1,5 @@
-#include <rpc/rpc.h>
-#include <rpc/rpc_router_ioctl.h>
+#include <android-rpc/rpc.h>
+#include <android-rpc/rpc_router_ioctl.h>
 #include <debug.h>
 
 #include <sys/types.h>   

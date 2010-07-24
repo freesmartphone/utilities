@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <rpc/rpc.h>
+#include <android-rpc/rpc.h>
 #include <sys/select.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <rpc/rpc_router_ioctl.h>
+#include <android-rpc/rpc_router_ioctl.h>
 #include <debug.h>
 #include <pthread.h>
 

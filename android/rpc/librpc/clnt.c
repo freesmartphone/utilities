@@ -1,6 +1,6 @@
-#include <rpc/rpc.h>
+#include <android-rpc/rpc.h>
 #include <arpa/inet.h>
-#include <rpc/rpc_router_ioctl.h>
+#include <android-rpc/rpc_router_ioctl.h>
 #include <debug.h>
 #include <pthread.h>
 #include <sys/select.h>
