@@ -15,13 +15,13 @@ lib_LTLIBRARIES = librpc.la
 
 rpcincludedir = $(includedir)/android-rpc
 rpcinclude_HEADERS = \
-	../rpc/clnt.h \
-	../rpc/rpc.h \
-	../rpc/svc.h \
-	../rpc/xdr.h \
-	../rpc/pmap_clnt.h \
-	../rpc/rpc_router_ioctl.h \
-	../rpc/types.h
+	../android-rpc/clnt.h \
+	../android-rpc/rpc.h \
+	../android-rpc/svc.h \
+	../android-rpc/xdr.h \
+	../android-rpc/pmap_clnt.h \
+	../android-rpc/rpc_router_ioctl.h \
+	../android-rpc/types.h
 
 librpc_la_SOURCES = \
 	debug.h \
