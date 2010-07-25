@@ -71,7 +71,6 @@ AC_CONFIG_FILES([
   Makefile
   data/Makefile
   data/themes/Makefile
-  conf/Makefile
   src/Makefile])
 
 AC_OUTPUT

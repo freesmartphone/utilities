@@ -20,14 +20,18 @@
 using Gee;
 
 namespace preboot {
+    
+private bool have_x = false;
+private bool debug = false;
 
 public class BootConfiguration {
-	public string title { get; set; }
-	public string description { get; set; }
-	public string kernel { get; set; }
-	public string cmdline {get; set; }
-	public string image_path { get; set; }
-	public string extra_args { get; set; }
+	public string title { get; set; default = ""; }
+	public string description { get; set; default = ""; }
+	public string kernel { get; set; default = ""; }
+	public string cmdline_append {get; set; default = ""; }
+    public string cmdline_remove { get; set; default = ""; }
+	public string image_path { get; set; default = ""; }
+	public string extra_args { get; set; default = ""; }
 }
 
 public class MainView {
@@ -39,6 +43,9 @@ public class MainView {
 	private bool first = true;
 	private TimeoutSource shutdownSource;
 	private int _selected;
+    private string _engine;
+    private int _width = 320;
+    private int _height = 480;
 
 	const string text_format = "list_text_%i";
 	const string desc_format = "list_desc_%i";
@@ -80,11 +87,29 @@ public class MainView {
 	}
 
 	public MainView() {
+        create();
 	}
 
 	public void create() {
+        
+        if ( have_x )
+		{
+			_engine = "software_x11";
+		}
+        else
+		{
+			var fd = Posix.open( "/dev/fb0", Posix.O_RDWR );
+			if ( fd == -1 )
+			{
+				FsoFramework.theLogger.warning( @"Can't open /dev/fb0: $(strerror(errno))" );
+				Posix.exit( -1 );
+			}
+			
+			_engine = "fb";
+		}
+        
 		/* create a window */
-		_window = new EcoreEvas.Window( "fb", 0, 0, 320, 480, null );
+		_window = new EcoreEvas.Window( _engine, 0, 0, _width, _height, null );
 		window.title_set( "preboot" );
 		window.show();
 		_evas = window.evas_get();
@@ -95,14 +120,14 @@ public class MainView {
 		_mainmenu.resize( 320, 480 );
 		_mainmenu.layer_set( 0 );
 		_mainmenu.show();
-	}
-
-	public void connectCallbacks() {
-		_mainmenu.signal_callback_add("mouse,up,1", "list_bg_*", onItemSelected);
+        
+        /* connect callbacks */
+        _mainmenu.signal_callback_add("mouse,up,1", "list_bg_*", onItemSelected);
 		_mainmenu.signal_callback_add("mouse,up,1", "boot_rect", onItemSelected);
 	}
-
-	public void connectTimeouts() {
+    
+    public void connectTimeouts() {
+        /* connect timeout sources */
 		if (controller.bootTimeout > 0) {
 			FsoFramework.theLogger.info(@"Connect timeout handler with timeout: $(controller.bootTimeout)");
 			timeoutSource = new TimeoutSource.seconds(1);
@@ -178,6 +203,89 @@ public class MainView {
 		first = false;
 	}
 
+    private string removePartFromCmdline(string cmdline, string part_name)
+    {
+        string result = "";
+        string[] cmdline_parts = cmdline.split(" ");
+        
+        foreach (string part in cmdline_parts)
+        {
+            if (!part.has_prefix(part_name))
+            {
+                result += part;
+            }
+        }
+        
+        return result;
+    }
+
+    private string[] createLoadCmd(string kernel, string? cmdline_append, string? cmdline_remove, string? extra_args=null) {
+		string[] params = new string[0];
+		FsoFramework.theLogger.info(@"kexec: $(controller.kexec)");
+		params += controller.kexec;
+		params += "--load";
+        
+        /* load default cmdline and use it as base */
+        var base_cmdline = "";
+        if (FsoFramework.FileHandling.isPresent("/proc/cmdline"))
+        {
+            base_cmdline = FsoFramework.FileHandling.read("/proc/cmdline");
+        }
+        
+        /* process cmdline */
+        string[] parts = cmdline_remove.split(" ");
+        FsoFramework.theLogger.debug(@"Have $(parts.length) parts to remove from cmdline");
+        foreach (string part in parts)
+        {
+            FsoFramework.theLogger.debug(@"Removing $part from cmdline ...");
+            base_cmdline = removePartFromCmdline(base_cmdline, part);
+        }
+        
+		if(cmdline_append != null) {
+            var composed_cmdline = @"$(base_cmdline) $(cmdline_append)";
+			FsoFramework.theLogger.info(@"adding cmdline: '$(composed_cmdline)'");
+			params += @"--command-line=\"$(composed_cmdline)\"";
+		}
+        
+		if(extra_args != null)
+			params += extra_args;
+		params += kernel;
+		return params;
+	}
+
+    private void loadKernel() {
+		string out, err;
+		int status;
+		_mainmenu.part_text_set("info_text", "Loading kernel");
+		var config = controller.configurations[selected];
+		FsoFramework.theLogger.info(@"cmdline_append: $(config.cmdline_append) cmdline_remove: $(config.cmdline_remove) args: $(config.extra_args) kernel: $(config.kernel)");
+		var cmd = createLoadCmd(config.kernel, config.cmdline_append, config.cmdline_remove, config.extra_args);
+
+		try
+		{
+            var composed = "";
+            foreach (var str in cmd)
+            {
+                composed += @"$str ";
+            }
+            FsoFramework.theLogger.debug(@"load kernel command: $composed");
+            
+            if (!debug)
+            {
+                return;
+            }
+            
+            Process.spawn_sync(null, cmd, null,0, null, out out, out err, out status);
+			FsoFramework.theLogger.debug(@"Kernel loading exited with: $status");
+			FsoFramework.theLogger.debug(@"STDOUT: $(out)");
+		}
+		catch (GLib.SpawnError e)
+		{
+			FsoFramework.theLogger.error(@"Kernel loading STDERR: $(err)");
+			FsoFramework.theLogger.error(@"$(e.message)");
+		}
+	}
+
 	private void bootKernel() {
 		string out, err;
 		int status;
@@ -185,8 +293,14 @@ public class MainView {
 		FsoFramework.theLogger.debug("Executing kernel");
 		try
 		{
-			Process.spawn_sync(null, {"kexec", "--exec"}, null,0, null, out out, out err, out status);
-			//If we get here we shoul log it
+            if (!debug)
+            {
+                return;
+            }
+            
+            Process.spawn_sync(null, {"kexec", "--exec"}, null,0, null, out out, out err, out status);
+            
+			/* If we get here we should log it */
 			FsoFramework.theLogger.debug(@"Kernel execution exited with: $status");
 			FsoFramework.theLogger.debug(@"STDOUT: $(out)");
 			Ecore.MainLoop.quit();
@@ -195,27 +309,6 @@ public class MainView {
 		{
 			FsoFramework.theLogger.error(@"boot kernel STDERR: $(err)");
 			FsoFramework.theLogger.error(@"");
-		}
-	}
-
-	private void loadKernel() {
-		string out, err;
-		int status;
-		_mainmenu.part_text_set("info_text", "Loading kernel");
-		var config = controller.configurations[selected];
-		FsoFramework.theLogger.info(@"cmdline: $(config.cmdline) args: $(config.extra_args) kernel: $(config.kernel)");
-		var cmd = createLoadCmd(config.kernel, config.cmdline, config.extra_args);
-
-		try
-		{
-			Process.spawn_sync(null, cmd, null,0, null, out out, out err, out status);
-			FsoFramework.theLogger.debug(@"Kernel loading exited with: $status");
-			FsoFramework.theLogger.debug(@"STDOUT: $(out)");
-		}
-		catch (GLib.SpawnError e)
-		{
-			FsoFramework.theLogger.error(@"Kernel loading STDERR: $(err)");
-			FsoFramework.theLogger.error(@"$(e.message)");
 		}
 	}
 
@@ -230,21 +323,6 @@ public class MainView {
 			return false;
 		}
 		return true;
-	}
-
-	private string[] createLoadCmd(string kernel, string? cmdline, string? extra_args=null) {
-		string[] params = new string[0];
-		FsoFramework.theLogger.info(@"kexec: $(controller.kexec)");
-		params += controller.kexec;
-		params += "--load";
-		if(cmdline != null) {
-			FsoFramework.theLogger.info(@"adding cmdline: '$(cmdline)'");
-			params += "--command-line=" + cmdline;
-		}
-		if(extra_args != null)
-			params += extra_args;
-		params += kernel;
-		return params;
 	}
 
 	private void up() {
@@ -292,8 +370,8 @@ public class MainView {
 
 public class MainController {
 	private MainView _mainView;
-	private string _themePath;
-	private string _configPath;
+	private string _themePath = "";
+	private string _configPath = "";
 	private IOChannel up_channel;
 	private IOChannel down_channel;
 	private IOChannel boot_channel;
@@ -366,13 +444,16 @@ public class MainController {
 		FsoFramework.SmartKeyFile sf = new FsoFramework.SmartKeyFile();
 
 		if (sf.loadFromFile(_configPath)) {
+            FsoFramework.theLogger.info(@"reading config file from '$(_configPath)'");
+            
 			var sections = sf.sectionsWithPrefix("boot.");
 			foreach(var section in sections) {
 				BootConfiguration bootConfig = new BootConfiguration();
 				bootConfig.title = sf.stringValue(section, "title", "<unknown>");
 				bootConfig.description = sf.stringValue(section, "description", "");
 				bootConfig.kernel = sf.stringValue(section, "kernel", "");
-				bootConfig.cmdline = sf.stringValue(section, "cmdline", "console=ttyS0");
+				bootConfig.cmdline_append = sf.stringValue(section, "cmdline_append", "");
+                bootConfig.cmdline_remove = sf.stringValue(section, "cmdline_remove", "");
 				bootConfig.image_path = sf.stringValue(section, "image_path", "");
 				bootConfig.extra_args = sf.stringValue(section, "extra_args", "");
 				configurations.add(bootConfig);
@@ -381,6 +462,12 @@ public class MainController {
 
 			bootTimeout = sf.intValue("general", "boot_timeout", -1);
 			_mainView.selected = sf.intValue("general", "default", 0);
+            
+            debug = sf.boolValue("general", "debug_mode", false);
+            if (debug)
+            {
+                FsoFramework.theLogger.info("DEBUG MODE ENABLED !!!");
+            }
 
 			kexec = sf.stringValue("general", "kexec", "/sbin/kexec");
 
@@ -414,48 +501,49 @@ public class MainController {
 	}
 
 	public void init() {
-		Ecore.init();
-		EcoreEvas.init();
-		Edje.init();
-
 		_mainView.create();
-		_mainView.connectCallbacks();
 		loadConfiguration();
 		_mainView.connectTimeouts();
 	}
 
-	public void run() {
-		message( "-> mainloop" );
-		Ecore.MainLoop.begin();
-		message( "<- mainloop" );
-	}
-
 	public void shutdown() {
-		/* shutdown */
-		Ecore.MainLoop.quit();
-		Edje.shutdown();
-		EcoreEvas.shutdown();
 	}
 
 }
 
 public static int main( string[] args) {
+    Ecore.init();
+    Evas.init();
+    Edje.init();
+    EcoreEvas.init();
+
+    have_x = Ecore.X.init() > 0;
+    
 	/* glib/ecore integration */
 	GLib.MainLoop gmain = new GLib.MainLoop( null, false );
 	if ( Ecore.MainLoop.glib_integrate() )
 	{
-		debug( "GLib mainloop integration successfully completed" );
+		FsoFramework.theLogger.info( "GLib mainloop integration successfully completed" );
 	}
 	else
 	{
-		critical( "Could not integrate glib mainloop. This library needs ecore compiled with glib mainloop support" );
+		FsoFramework.theLogger.info( "Could not integrate glib mainloop. This library needs ecore compiled with glib mainloop support" );
 		return -1;
 	}
 
 	var controller = new MainController();
 	controller.init();
-	controller.run();
+	
+    Ecore.MainLoop.begin();
+    
 	controller.shutdown();
+    
+    Ecore.X.shutdown();
+    EcoreEvas.shutdown();
+    Edje.shutdown();
+    Evas.shutdown();
+    Ecore.shutdown();
+    
 	return 0;
 }
 
