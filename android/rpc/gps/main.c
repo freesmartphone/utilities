@@ -73,7 +73,7 @@ int pdsm_client_init(struct CLIENT *clnt, int client) {
 	par.data=malloc(sizeof(int));
 	par.length=1;
 	par.data[0]=client;
-	if(clnt_call(clnt, 0x2, xdr_args, &par, xdr_result_int, &res, timeout)) {
+	if(android_clnt_call(clnt, 0x2, xdr_args, &par, xdr_result_int, &res, timeout)) {
 		printf("pdsm_client_init(%x) failed\n", client);
 		free(par.data);
 		exit(-1);
@@ -92,7 +92,7 @@ int pdsm_atl_l2_proxy_reg(struct CLIENT *clnt, int val0, int val1, int val2) {
 	par.data[0]=val0;
 	par.data[1]=val1;
 	par.data[2]=val2;
-	if(clnt_call(clnt, 0x3, xdr_args, &par, xdr_result_int, &res, timeout)) {
+	if(android_clnt_call(clnt, 0x3, xdr_args, &par, xdr_result_int, &res, timeout)) {
 		printf("pdsm_atl_l2_proxy_reg(%x, %x, %x) failed\n", par.data[0], par.data[1], par.data[2]);
 		free(par.data);
 		exit(-1);
@@ -109,7 +109,7 @@ int pdsm_atl_dns_proxy_reg(struct CLIENT *clnt, int val0, int val1) {
 	par.length=2;
 	par.data[0]=val0;
 	par.data[1]=val1;
-	if(clnt_call(clnt, 0x6, xdr_args, &par, xdr_result_int, &res, timeout)) {
+	if(android_clnt_call(clnt, 0x6, xdr_args, &par, xdr_result_int, &res, timeout)) {
 		printf("pdsm_atl_dns_proxy_reg(%x, %x) failed\n", par.data[0], par.data[1]);
 		free(par.data);
 		exit(-1);
@@ -130,7 +130,7 @@ int pdsm_client_pd_reg(struct CLIENT *clnt, int client, int val0, int val1, int 
 	par.data[3]=val2;
 	par.data[4]=val3;
 	par.data[5]=val4;
-	if(clnt_call(clnt, 0x4, xdr_args, &par, xdr_result_int, &res, timeout)) {
+	if(android_clnt_call(clnt, 0x4, xdr_args, &par, xdr_result_int, &res, timeout)) {
 		printf("pdsm_client_pd_reg(%d, %d, %d, %d, %d, %d) failed\n", par.data[0], par.data[1], par.data[2], par.data[3], par.data[4], par.data[5]);
 		free(par.data);
 		exit(-1);
@@ -151,7 +151,7 @@ int pdsm_client_pa_reg(struct CLIENT *clnt, int client, int val0, int val1, int 
 	par.data[3]=val2;
 	par.data[4]=val3;
 	par.data[5]=val4;
-	if(clnt_call(clnt, 0x5, xdr_args, &par, xdr_result_int, &res, timeout)) {
+	if(android_clnt_call(clnt, 0x5, xdr_args, &par, xdr_result_int, &res, timeout)) {
 		printf("pdsm_client_pa_reg(%d, %d, %d, %d, %d, %d) failed\n", par.data[0], par.data[1], par.data[2], par.data[3], par.data[4], par.data[5]);
 		free(par.data);
 		exit(-1);
@@ -172,7 +172,7 @@ int pdsm_client_lcs_reg(struct CLIENT *clnt, int client, int val0, int val1, int
 	par.data[3]=val2;
 	par.data[4]=val3;
 	par.data[5]=val4;
-	if(clnt_call(clnt, 0x6, xdr_args, &par, xdr_result_int, &res, timeout)) {
+	if(android_clnt_call(clnt, 0x6, xdr_args, &par, xdr_result_int, &res, timeout)) {
 		printf("pdsm_client_lcs_reg(%d, %d, %d, %d, %d, %d) failed\n", par.data[0], par.data[1], par.data[2], par.data[3], par.data[4], par.data[5]);
 		free(par.data);
 		exit(-1);
@@ -193,7 +193,7 @@ int pdsm_client_ext_status_reg(struct CLIENT *clnt, int client, int val0, int va
 	par.data[3]=val2;
 	par.data[4]=val3;
 	par.data[5]=val4;
-	if(clnt_call(clnt, 0x8, xdr_args, &par, xdr_result_int, &res, timeout)) {
+	if(android_clnt_call(clnt, 0x8, xdr_args, &par, xdr_result_int, &res, timeout)) {
 		printf("pdsm_client_ext_status_reg(%d, %d, %d, %d, %d, %d) failed\n", par.data[0], par.data[1], par.data[2], par.data[3], par.data[4], par.data[5]);
 		free(par.data);
 		exit(-1);
@@ -214,7 +214,7 @@ int pdsm_client_xtra_reg(struct CLIENT *clnt, int client, int val0, int val1, in
 	par.data[3]=val2;
 	par.data[4]=val3;
 	par.data[5]=val4;
-	if(clnt_call(clnt, 0x7, xdr_args, &par, xdr_result_int, &res, timeout)) {
+	if(android_clnt_call(clnt, 0x7, xdr_args, &par, xdr_result_int, &res, timeout)) {
 		printf("pdsm_client_xtra_reg(%d, %d, %d, %d, %d, %d) failed\n", par.data[0], par.data[1], par.data[2], par.data[3], par.data[4], par.data[5]);
 		free(par.data);
 		exit(-1);
@@ -230,7 +230,7 @@ int pdsm_client_act(struct CLIENT *clnt, int client) {
 	par.data=malloc(sizeof(int));
 	par.length=1;
 	par.data[0]=client_IDs[client];
-	if(clnt_call(clnt, 0x9, xdr_args, &par, xdr_result_int, &res, timeout)) {
+	if(android_clnt_call(clnt, 0x9, xdr_args, &par, xdr_result_int, &res, timeout)) {
 		printf("pdsm_client_act(%d) failed\n", par.data[0]);
 		free(par.data);
 		exit(-1);
@@ -253,7 +253,7 @@ int pdsm_client_unknown(struct CLIENT *clnt, int val0, int client, int val1, int
 	par.data[5]=val4;
 	par.data[6]=val5;
 	par.data[7]=val6;
-	if(clnt_call(clnt, 0x1e, xdr_args, &par, xdr_result_int, &res, timeout)) {
+	if(android_clnt_call(clnt, 0x1e, xdr_args, &par, xdr_result_int, &res, timeout)) {
 		printf("pdsm_client_unknown() failed\n");
 		exit(-1);
 	}
@@ -294,7 +294,7 @@ int pdsm_get_position(struct CLIENT *clnt, int val0, int val1, int val2, int val
 	par.data[25]=val25;
 	par.data[26]=val26;
 	par.data[27]=val27;
-	if(clnt_call(clnt, 0xb, xdr_args, &par, xdr_result_int, &res, timeout)) {
+	if(android_clnt_call(clnt, 0xb, xdr_args, &par, xdr_result_int, &res, timeout)) {
 		printf("pdsm_client_get_position() failed\n");
 		exit(-1);
 	}
@@ -322,11 +322,11 @@ void dispatch(struct svc_req* a, registered_server* svc) {
 int main(int argc, char **argv, char **envp) {
 	//timeout isn't taken in account by librpc
 	struct timeval timeout;
-	struct CLIENT *clnt=clnt_create(NULL, 0x3000005B, 0x90380d3d, NULL);
+	struct CLIENT *clnt=android_clnt_create(NULL, 0x3000005B, 0x90380d3d, NULL);
 #if 0
-	struct CLIENT *clnt_atl=clnt_create(NULL, 0x3000001D, 0x90380d3d, NULL);
+	struct CLIENT *clnt_atl=android_clnt_create(NULL, 0x3000001D, 0x90380d3d, NULL);
 #else 
-	struct CLIENT *clnt_atl=clnt_create(NULL, 0x3000001D, 0x51c92bd8, NULL);
+	struct CLIENT *clnt_atl=android_clnt_create(NULL, 0x3000001D, 0x51c92bd8, NULL);
 #endif
 	
 	
@@ -347,32 +347,32 @@ int main(int argc, char **argv, char **envp) {
 
 #if 0
 	printf("pdsm_client_deact(0xDA3);\n");
-	if(clnt_call(clnt, 0x9, xdr_args, 6, xdr_result, 6, timeout)) {
+	if(android_clnt_call(clnt, 0x9, xdr_args, 6, xdr_result, 6, timeout)) {
 		printf("\tfailed\n");
 		return -1;
 	}
 
 	printf("pdsm_client_init(2)\n");
-	if(clnt_call(clnt, 0x2, xdr_args, 0, xdr_result, 0, timeout)) {
+	if(android_clnt_call(clnt, 0x2, xdr_args, 0, xdr_result, 0, timeout)) {
 		printf("\tfailed\n");
 		return -1;
 	}
 
 
 	printf("pdsm_client_pd_reg(0x%x, 0x00, 0x00, 0x00, 0xF3F0FFFF, -1);\n", client_ID);
-	if(clnt_call(clnt, 0x4, xdr_args, 1, xdr_result, 1, timeout)) {
+	if(android_clnt_call(clnt, 0x4, xdr_args, 1, xdr_result, 1, timeout)) {
 		printf("\tfailed\n");
 		return -1;
 	}
 
 	printf("pdsm_client_ext_status_reg(0xDA3, 0x00, 0x01, 0x00, 0x04, -1);\n");
-	if(clnt_call(clnt, 0x7, xdr_args, 2, xdr_result, 2, timeout)) {
+	if(android_clnt_call(clnt, 0x7, xdr_args, 2, xdr_result, 2, timeout)) {
 		printf("\tfailed\n");
 		return -1;
 	}
 
 	printf("pdsm_client_act(0xDA3);\n");
-	if(clnt_call(clnt, 0x9, xdr_args, 3, xdr_result, 3, timeout)) {
+	if(android_clnt_call(clnt, 0x9, xdr_args, 3, xdr_result, 3, timeout)) {
 		printf("\tfailed\n");
 		return -1;
 	}
@@ -382,12 +382,12 @@ int main(int argc, char **argv, char **envp) {
 
 	/*
 	printf("pdsm_client_end_session(0xb, 0x00, 0x00, 0xda3);\n");
-	if(clnt_call(clnt, 0xc, xdr_args, 5, xdr_result, 5, timeout)) {
+	if(android_clnt_call(clnt, 0xc, xdr_args, 5, xdr_result, 5, timeout)) {
 		printf("\tfailed\n");
 		return -1;
 	}*/
 	printf("pdsm_client_get_position(0xda3, 0xb);\n");
-	if(clnt_call(clnt, 0xB, xdr_args, 4, xdr_result, 4, timeout)) {
+	if(android_clnt_call(clnt, 0xB, xdr_args, 4, xdr_result, 4, timeout)) {
 		printf("\tfailed\n");
 		return -1;
 	}
@@ -397,7 +397,7 @@ int main(int argc, char **argv, char **envp) {
 	while(1) {
 		/*
 		printf("pdsm_client_get_position(0xDA3, 0xa);\n");
-		if(clnt_call(clnt, 0xB, xdr_args, 7, xdr_result, 7, timeout)) {
+		if(android_clnt_call(clnt, 0xB, xdr_args, 7, xdr_result, 7, timeout)) {
 			printf("\tfailed\n");
 			return -1;
 		}*/
@@ -407,7 +407,7 @@ int main(int argc, char **argv, char **envp) {
 	/*
 	for(i=0;i<256;++i) {
 		printf("clk_regime_sec_msm_get_clk_freq_khz(%d);\n", i);
-		if(clnt_call(clnt, 0x24, xdr_args, i, xdr_result, 42, timeout)) {
+		if(android_clnt_call(clnt, 0x24, xdr_args, i, xdr_result, 42, timeout)) {
 			printf("\tfailed\n");
 			return -1;
 		}

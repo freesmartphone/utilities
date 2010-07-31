@@ -69,7 +69,7 @@ enum clnt_stat {
   RPC_SYSTEMERROR=12,    /* generic "other problem" */
   RPC_NOBROADCAST = 21,    /* Broadcasting not supported */
   /*
-   * callrpc & clnt_create errors
+   * callrpc & android_clnt_create errors
    */
   RPC_UNKNOWNHOST=13,    /* unknown host name */
   RPC_UNKNOWNPROTO=17,    /* unknown protocol */
@@ -102,7 +102,7 @@ typedef struct CLIENT CLIENT;
  * Callback called when the reply is recieved or there is an error in
  * getting reply.
  */
-typedef void (*clnt_call_cb)
+typedef void (*android_clnt_call_cb)
 ( 
   CLIENT * clnt, 
   void * cookie, 
@@ -110,7 +110,7 @@ typedef void (*clnt_call_cb)
   rpc_reply_header error
 );
 
-typedef void (*clnt_call_non_blocking_cb)
+typedef void (*android_clnt_call_non_blocking_cb)
 ( 
   CLIENT * clnt, 
   void * cookie, 
@@ -147,7 +147,7 @@ SIDE EFFECTS
   None.
 ===========================================================================*/
 extern enum clnt_stat 
-clnt_call
+android_clnt_call
 ( 
   CLIENT *h, 
   u_long proc,
@@ -165,7 +165,7 @@ DESCRIPTION
   RPCGEN support routine. This routine is called by client routines generated
   by RPCGEN. It generates and sends an RPC message to a server.
 
-  This is a non-blocking call. It registers clnt_call_callback to be called
+  This is a non-blocking call. It registers android_clnt_call_callback to be called
   when the RPC response is received.
   
 DEPENDENCIES
@@ -189,7 +189,7 @@ SIDE EFFECTS
   None.
 ===========================================================================*/
 extern enum clnt_stat 
-clnt_call_non_blocking
+android_clnt_call_non_blocking
 ( 
   CLIENT *h,
   u_long proc,
@@ -197,13 +197,13 @@ clnt_call_non_blocking
   caddr_t args_ptr,
   xdrproc_t xdr_results,
   int results_size,
-  clnt_call_cb result_cb,
+  android_clnt_call_cb result_cb,
   void * cb_data
 );
 
 extern bool_t clnt_freeres( CLIENT *xdr, xdrproc_t xdr_res, caddr_t res_ptr );
-extern void clnt_destroy( CLIENT *xdr );
-extern CLIENT * clnt_create ( char * host, uint32 prog, uint32 vers,
+extern void android_clnt_destroy( CLIENT *xdr );
+extern CLIENT * android_clnt_create ( char * host, uint32 prog, uint32 vers,
                               char * proto);
 
 #ifdef __cplusplus
