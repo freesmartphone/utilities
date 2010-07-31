@@ -472,22 +472,22 @@ public class MainController {
 			kexec = sf.stringValue("general", "kexec", "/sbin/kexec");
 
 			FsoFramework.theLogger.info("Setting up up key");
-			var up = sf.stringListValue("general", "up_key", {"event0", Linux.Input.KEY_UP.to_string()});
+			var up = sf.stringListValue("general", "up_key", {"event1", Linux.Input.KEY_UP.to_string()});
 
 			up_key = (uint16)up[1].to_int();
 			up_channel = setupIOChannel(up[0],_mainView.onUp);
 
 			FsoFramework.theLogger.info("Setting up down key");
-			var down = sf.stringListValue("general", "down_key", {"event0", Linux.Input.KEY_DOWN.to_string()});
+			var down = sf.stringListValue("general", "down_key", {"event1", Linux.Input.KEY_DOWN.to_string()});
 			down_key = (uint16)down[1].to_int();
 			down_channel = setupIOChannel(down[0],_mainView.onDown);
 
 			FsoFramework.theLogger.info("Setting up boot key");
-			var boot = sf.stringListValue("general", "boot_key", {"event0", Linux.Input.KEY_ENTER.to_string()});
+			var boot = sf.stringListValue("general", "boot_key", {"event1", Linux.Input.KEY_ENTER.to_string()});
 			boot_key = (uint16)boot[1].to_int();
 			boot_channel = setupIOChannel(boot[0],_mainView.onBoot);
 
-			var shutdown = sf.stringListValue("general", "shutdown_key", {"event0", Linux.Input.KEY_ESC.to_string()});
+			var shutdown = sf.stringListValue("general", "shutdown_key", {"event1", Linux.Input.KEY_ESC.to_string()});
 			shutdown_key = (uint16)shutdown[1].to_int();
 			shutdown_channel = setupIOChannel(shutdown[0], _mainView.onShutdown);
 
