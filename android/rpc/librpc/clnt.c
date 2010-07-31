@@ -270,7 +270,7 @@ static void *rx_context(void *__u __attribute__((unused)))
 }
 
 enum clnt_stat
-clnt_call(
+android_clnt_call(
     CLIENT       * client,
     u_long         proc,
     xdrproc_t      xdr_args,
@@ -392,7 +392,7 @@ clnt_call(
   out:
     pthread_mutex_unlock(&client->lock);
     return ret;
-} /* clnt_call */
+} /* android_clnt_call */
 
 bool_t xdr_recv_auth (xdr_s_type *xdr, opaque_auth *auth)
 {
@@ -510,7 +510,7 @@ bool_t xdr_recv_reply_header (xdr_s_type *xdr, rpc_reply_header *reply)
     return TRUE;
 } /* xdr_recv_reply_header */
 
-CLIENT *clnt_create(
+CLIENT *android_clnt_create(
     char * host,
     uint32 prog,
     uint32 vers,
@@ -570,7 +570,7 @@ CLIENT *clnt_create(
     return client;
 }
 
-void clnt_destroy(CLIENT *client) {
+void android_clnt_destroy(CLIENT *client) {
     if (client) {
         pthread_mutex_lock(&client->lock);
         D("%08x:%08x destroying client\n",
@@ -627,9 +627,9 @@ void clnt_destroy(CLIENT *client) {
         xdr_destroy_common(client->xdr);
 
         // FIXME: what happens when we lock the client while destroying it,
-        // and another thread locks the mutex in clnt_call, and then we
+        // and another thread locks the mutex in android_clnt_call, and then we
         // call pthread_mutex_destroy?  Does destroy automatically unlock and
-        // then cause the lock in clnt_call() to return an error?  When we
+        // then cause the lock in android_clnt_call() to return an error?  When we
         // unlock the mutex here there can be a context switch to the other
         // thread, which will cause it to obtain the mutex on the destroyed
         // client (and probably crash), and then we get to the destroy call
