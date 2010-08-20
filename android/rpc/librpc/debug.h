@@ -21,10 +21,7 @@
 
 #define LOG_TAG "RPC"
 
-#define PRINT(x...) do {                                    \
-        fprintf(stdout, "%s(%d) ", __FUNCTION__, __LINE__); \
-        fprintf(stdout, ##x);                               \
-    } while(0)
+#define PRINT(x...) do { } while(0)
 
 #ifdef DEBUG
 #define D PRINT
@@ -38,16 +35,8 @@
 #define V(x...) do { } while(0)
 #endif
 
-#define E(x...) do {                                        \
-        fprintf(stderr, "%s(%d) ", __FUNCTION__, __LINE__); \
-        fprintf(stderr, ##x);                               \
-    } while(0)
+#define E(x...) do { } while(0)
 
-#define FAILIF(cond, msg...) do {                                              \
-        if (__builtin_expect (cond, 0)) {                                      \
-            fprintf(stderr, "%s:%s:(%d): ", __FILE__, __FUNCTION__, __LINE__); \
-            fprintf(stderr, ##msg);                                            \
-        }                                                                      \
-    } while(0)
+#define FAILIF(cond, msg...) do { } while(0)
 
 #endif/*DEBUG_H*/
