@@ -20,10 +20,6 @@ INCLUDES = \
 
 BUILT_SOURCES = .vala.stamp
 
-ANDROID_RPC_LIBS = \
-	../librpc/librpc.la \
-	$(NULL)
-
 bin_PROGRAMS = fso-msm-gps-activator
 
 fso_msm_gps_activator_VALASOURCES = \
@@ -41,7 +37,6 @@ $(BUILT_SOURCES): $(fso_msm_gps_activator_VALASOURCES)
 
 fso_msm_gps_activator_LDADD = \
 	$(top_srcdir)/librpc/librpc.la \
-	$(ANDROID_RPC_LIBS) \
 	$(DBUS_LIBS) \
 	$(GLIB_LIBS) \
 	$(NULL)
