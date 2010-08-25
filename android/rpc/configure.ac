@@ -87,6 +87,8 @@ AC_CONFIG_FILES([
 	librpc/Makefile
 	gps/Makefile
 	fso-msm-gps-activator/Makefile
+	data/Makefile
+	data/org.freesmartphone.msmgps.service
 	android-rpc-1.0.pc
 ])
 

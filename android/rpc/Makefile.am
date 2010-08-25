@@ -1,4 +1,4 @@
-SUBDIRS = librpc gps fso-msm-gps-activator
+SUBDIRS = librpc gps fso-msm-gps-activator data
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = android-rpc-1.0.pc

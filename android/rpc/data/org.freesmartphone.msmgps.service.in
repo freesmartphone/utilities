@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=org.freesmartphone.msmgps
+Exec=@prefix@/sbin/fso-msm-gps-activator
+User=root
+FSO-provides-resource=GPS
