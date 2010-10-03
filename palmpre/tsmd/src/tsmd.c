@@ -157,6 +157,7 @@ static void read_and_send(int source_fd, int dest_fd)
 
   struct ts_sample samp;
   int ret;
+  int in_movement = 0;
 
   ts = malloc(sizeof(struct tsdev));
   if (ts) {
@@ -178,18 +179,30 @@ static void read_and_send(int source_fd, int dest_fd)
     }
 
     if (ret != 1) {
-      continue;
+        // if we were in movement before, movement is now finished an we can send a
+        // BTN_TOUCH up event
+        if (in_movement)
+            send_uinput_event(dest_fd, EV_KEY, BTN_TOUCH, 0);
+
+        in_movement = 0;
+        continue;
     }
 
 #ifdef DEBUG
     printf("%ld.%06ld: %6d %6d %6d\n", samp.tv.tv_sec, samp.tv.tv_usec, samp.x, samp.y, samp.pressure);
 #endif
+
+    // if was not in movement before, we are now in movement mode
+    if (!in_movement) {
+        in_movement = 1;
+
+        // if we have a pressure then report button touch down event
+        if (samp.pressure > 0)
+            send_uinput_event(dest_fd, EV_KEY, BTN_TOUCH, 0);
+    }
+
     send_uinput_event(dest_fd, EV_ABS, ABS_X, samp.x);
     send_uinput_event(dest_fd, EV_ABS, ABS_Y, samp.y);
-
-	if (samp.pressure == 0)
-		send_uinput_event(dest_fd, EV_KEY, BTN_TOUCH, 0);
-
     send_uinput_event(dest_fd, EV_SYN, SYN_REPORT, 0);
   }
 }
