@@ -32,7 +32,7 @@
 
 #include "tsmd.h"
 
-//#define DEBUG
+// #define DEBUG
 
 static void init_cy8mrln(int fd)
 {
@@ -182,10 +182,11 @@ static void read_and_send(int source_fd, int dest_fd)
     }
 
 #ifdef DEBUG
-    //printf("%ld.%06ld: %6d %6d %6d\n", samp.tv.tv_sec, samp.tv.tv_usec, samp.x, samp.y, samp.pressure);
+    printf("%ld.%06ld: %6d %6d %6d\n", samp.tv.tv_sec, samp.tv.tv_usec, samp.x, samp.y, samp.pressure);
 #endif
     send_uinput_event(dest_fd, EV_ABS, ABS_X, samp.x);
     send_uinput_event(dest_fd, EV_ABS, ABS_Y, samp.y);
+    send_uinput_event(dest_fd, EV_ABS, ABS_PRESSURE, samp.pressure);
     send_uinput_event(dest_fd, EV_SYN, SYN_REPORT, 0);
   }
 }
