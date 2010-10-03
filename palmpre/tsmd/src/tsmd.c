@@ -186,7 +186,10 @@ static void read_and_send(int source_fd, int dest_fd)
 #endif
     send_uinput_event(dest_fd, EV_ABS, ABS_X, samp.x);
     send_uinput_event(dest_fd, EV_ABS, ABS_Y, samp.y);
-    send_uinput_event(dest_fd, EV_ABS, ABS_PRESSURE, samp.pressure);
+
+	if (samp.pressure == 0)
+		send_uinput_event(dest_fd, EV_KEY, BTN_TOUCH, 0);
+
     send_uinput_event(dest_fd, EV_SYN, SYN_REPORT, 0);
   }
 }
