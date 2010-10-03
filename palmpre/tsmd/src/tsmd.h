@@ -30,7 +30,7 @@
 #define Y_AXIS_MAX   527
 #define Y_AXIS_MIN   0
 #define PRESSURE_MIN 0
-#define PRESSURE_MAX 15000
+#define PRESSURE_MAX 256
 
 /* device node CY8MRLN touchscreen IOCTLs */
 #define CY8MRLN_IOCTL_SET_SCANRATE       _IOW('c', 0x08, int)
