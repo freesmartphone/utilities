@@ -10,12 +10,13 @@ AC_STDC_HEADERS
 AC_PROG_LIBTOOL
 AC_LIBTOOL_DLOPEN
 
+VALA_REQUIRED=0.8.1.1
 AC_PATH_PROG(VALAC, valac, valac)
 AC_SUBST(VALAC)
+m4_ifdef([AM_PROG_VALAC], [AM_PROG_VALAC([$VALA_REQUIRED])])
 
 ##############################################################################
 # required versions
-VALA_REQUIRED=0.8.1.1
 GLIB_REQUIRED=2.18.0
 GEE_REQUIRED=0.5.0
 DBUS_REQUIRED=1.2.1
@@ -23,11 +24,6 @@ DBUS_GLIB_REQUIRED=0.76
 FSO_GLIB_REQUIRED=2010.05.11.2
 FSO_FRAMEWORK_REQUIRED=0.2.4
 FSO_RESOURCE_REQUIRED=0.1.0
-
-##############################################################################
-# vala
-PKG_CHECK_MODULES(VALA,
-  vala-1.0 >= $VALA_REQUIRED)
 
 ##############################################################################
 # glib and friends + gee
