@@ -32,8 +32,6 @@
 
 #include "tsmd.h"
 
-// #define DEBUG
-
 static void init_cy8mrln(int fd)
 {
   static int scanrate = 60;
@@ -261,6 +259,50 @@ int daemonize(void) {
   close(STDERR_FILENO);
 }
 
+//glibc has a daemon function. 
+int no_foreground = 1;
+
+int network_port = 0;
+char network_addr[BUF_SIZE] = "\0";
+char device_node[BUF_SIZE] = "\0";
+
+#define CONFIG_FILE "/etc/tsmd.conf"
+
+void parse_config(char* config)
+{
+    FILE* fp = fopen(config, "r");
+    char buf[1024];
+    int len = 0;
+    buf[1023] = '\0';
+    if (fp == NULL) {
+#ifdef DEBUG
+        perror("open config");
+#endif
+        return;
+    }
+    while(!feof(fp))
+    {
+        fgets(buf, 1023, fp);
+        len = strnlen(buf, 1023);
+        if (buf[len - 1] == '\n')
+             buf[len - 1] = '\0';
+
+        if (!strncmp("device=", buf, 7)) {
+            strncpy(device_node, buf + 7, BUF_SIZE);
+        } else if(!strncmp("addr=", buf, 5)) {
+            strncpy(network_addr, buf + 5, BUF_SIZE);
+        } else if(!strncmp("port=", buf, 5)) {
+            network_port = atoi(buf + 5);
+        } else if(!strncmp("daemonize=", buf, 10)) {
+            no_foreground = atoi(buf + 10);
+        }
+#ifdef DEBUG
+        else
+             printf("Cannot parse config: %s", buf);
+#endif
+    }
+}
+
 int main(int argc, char *argv[])
 {
   opterr = 0;
@@ -276,13 +318,11 @@ int main(int argc, char *argv[])
     {NULL, no_argument, NULL, 0}
   };
   int showhelp = 0;
-  int daemon = 1;
-
-  int network_port = 0;
-  char network_addr[BUF_SIZE] = "\0";
-  char device_node[BUF_SIZE] = "\0";
   int source_fd;
   int uinput_fd;
+
+  //parse config before arguments. This makes it possible to override the config
+  parse_config(CONFIG_FILE);
 
   while (1) {
     option_index = 0;
@@ -296,7 +336,7 @@ int main(int argc, char *argv[])
       showhelp = 1;
       break;
     case 'f':
-      daemon = 0;
+      no_foreground = 0;
       break;
     case 'n':
       snprintf(device_node, 30, "%s", optarg);
@@ -315,6 +355,7 @@ int main(int argc, char *argv[])
   printf("device node = %s\n", device_node);
   printf("network port = %d\n", network_port);
   printf("network addr = %s\n", network_addr);
+  printf("daemon = %i", no_foreground);
 #endif
 
   if (showhelp || (network_addr[0] == 0 && device_node[0] == 0) || (network_addr[0] != 0 && network_port == 0)) {
@@ -337,7 +378,7 @@ int main(int argc, char *argv[])
 
   uinput_fd = open_uinput_device();
 
-  if (daemon) {
+  if (no_foreground) {
     daemonize();
   }
   
