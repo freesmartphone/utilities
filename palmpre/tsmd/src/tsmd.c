@@ -178,32 +178,33 @@ static void read_and_send(int source_fd, int dest_fd)
       die("ts_read");
     }
 
-    if (ret != 1) {
-        // if we were in movement before, movement is now finished an we can send a
-        // BTN_TOUCH up event
-        if (in_movement)
-            send_uinput_event(dest_fd, EV_KEY, BTN_TOUCH, 0);
-
-        in_movement = 0;
-        continue;
-    }
-
-#ifdef DEBUG
-    printf("%ld.%06ld: %6d %6d %6d\n", samp.tv.tv_sec, samp.tv.tv_usec, samp.x, samp.y, samp.pressure);
-#endif
-
-    // if was not in movement before, we are now in movement mode
-    if (!in_movement) {
-        in_movement = 1;
-
-        // if we have a pressure then report button touch down event
-        if (samp.pressure > 0)
-            send_uinput_event(dest_fd, EV_KEY, BTN_TOUCH, 1);
-    }
-
     send_uinput_event(dest_fd, EV_ABS, ABS_X, samp.x);
     send_uinput_event(dest_fd, EV_ABS, ABS_Y, samp.y);
-    send_uinput_event(dest_fd, EV_ABS, ABS_PRESSURE, samp.pressure);
+    if (samp.pressure == 0 && in_movement) {
+        // if we were in movement before, movement is now finished an we can send a
+        // BTN_TOUCH up event
+        send_uinput_event(dest_fd, EV_KEY, BTN_TOUCH, 0);
+        in_movement = 0;
+#ifdef DEBUG
+        printf("finger up\n");
+#endif
+    } else if (samp.pressure > 0) {
+        if (!in_movement) {
+            in_movement = 1;
+
+            // if we have a pressure then report button touch down event
+            send_uinput_event(dest_fd, EV_KEY, BTN_TOUCH, 1);
+#ifdef DEBUG
+            printf("finger down\n");
+#endif
+        } else {
+            //Report pressure 
+#ifdef DEBUG
+            printf("%ld.%06ld: %6d %6d %6d\n", samp.tv.tv_sec, samp.tv.tv_usec, samp.x, samp.y, samp.pressure);
+#endif
+            send_uinput_event(dest_fd, EV_ABS, ABS_PRESSURE, samp.pressure);
+        }
+    }
     send_uinput_event(dest_fd, EV_SYN, SYN_REPORT, 0);
   }
 }
