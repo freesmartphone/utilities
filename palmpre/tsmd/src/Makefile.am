@@ -7,8 +7,12 @@ AM_CPPFLAGS = \
 	$(NULL)
 
 AM_CFLAGS = \
-	$(EXTRA_CFLAGS)
+	$(EXTRA_CFLAGS) \
+	$(TSLIB_CFLAGS) \
 	$(NULL)
+if WANT_DEBUG
+AM_CFLAGS += -DDEBUG
+endif
 
 bin_PROGRAMS = tsmd
 
@@ -16,7 +20,6 @@ tsmd_SOURCES = \
 	tsmd.c \
 	$(NULL)
 
-tsmd_LDADD = -lts
+tsmd_LDADD = $(TSLIB_LIBS)
 
-tsmd_LDFLAGS =
 
