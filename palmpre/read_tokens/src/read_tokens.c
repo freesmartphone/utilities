@@ -27,21 +27,20 @@
 #include <stdint.h>
 
 #define DEFAULT_TOKEN_INPUT			"/dev/mmcblk0p1"
-
+#define DEBUG 1
+#define KEY_OFFSET 0x14
+#define MAX_KEY_LEN 0x10
+#define VALUE_OFFSET ((KEY_OFFSET) + 0x10)
+#define TOKEN_OFFSET 0x5000
+#define TOKEN_SIZE 0x1000
 struct token
 {
 	uint8_t *value;
-	uint32_t value_len;
 	uint8_t *key;
-	uint32_t key_len;
 };
 
-int use_stdout = 1;
-FILE *output = NULL;
-
-void token_write_output(struct token *tok)
+void token_write_output(struct token *tok, FILE* out)
 {
-	FILE *out = use_stdout ? stdout : output;
 	fprintf(out, "%s=%s\n", tok->key, tok->value);
 	fflush(out);
 }
@@ -52,15 +51,19 @@ void token_free(struct token *tok)
 	free(tok->value);
 }
 
-int parse_token(uint8_t *data, uint32_t size, uint32_t offset, struct token *new_token)
+int parse_token(uint8_t *data, uint32_t size, uint32_t* offset, struct token *new_token)
 {
+#ifdef DEBUG
+	fprintf (stderr, "position %08x\n", *offset + TOKEN_OFFSET);
+#endif
 	int tmp = 0;
+	uint8_t* cur_data = data + *offset;
 
 	/* check for some value */
-	tmp = (data[offset+8]  >>  0) |
-		  (data[offset+9]  >>  8) |
-		  (data[offset+10] >> 16) |
-		  (data[offset+11] >> 24);
+	tmp = (cur_data[8]  >>  0) |
+		  (cur_data[9]  >>  8) |
+		  (cur_data[10] >> 16) |
+		  (cur_data[11] >> 24);
 	if (tmp == 0x10000)
 		return 0;
 
@@ -68,43 +71,29 @@ int parse_token(uint8_t *data, uint32_t size, uint32_t offset, struct token *new
 
 	/* key starts at 0x14 and there seems to be no stored length so we have to
 	   to calculate its length first */
-	uint8_t *p = data + offset + 0x14;
-	new_token->key_len = 0;
-	while (*p != 0) {
-		new_token->key_len++;
-		p++;
-	}
-	new_token->key = (uint8_t*)malloc(new_token->key_len);
-	p = data + offset + 0x14;
-	memcpy(new_token->key, p, new_token->key_len);
-	new_token->key[new_token->key_len] = '\0';
-
-	/* copy value */
-	new_token->value_len = (data[offset+8] << 0) | (data[offset+9] << 8);
-	new_token->value = (uint8_t*)malloc(new_token->value_len);
-	p = data + offset + 0x24;
-	memcpy(new_token->value, p, new_token->value_len);
-
+	new_token->key = strndup (&cur_data[KEY_OFFSET], MAX_KEY_LEN);
+	int value_len = (cur_data[8] << 0) | (data[9] << 8);
+	new_token->value = strndup(&cur_data[VALUE_OFFSET], value_len);
 #ifdef DEBUG
-	printf("found new token (key = '%s', value = '%s')\n",
+	fprintf(stderr,"found new token (key = '%s', value = '%s')\n",
 		   new_token->key,
 		   new_token->value);
 #endif
+	*offset = *offset + value_len + VALUE_OFFSET;
 
 	return 1;
 }
 
 uint32_t find_next_token(uint8_t *data, uint32_t size, uint32_t offset, struct token *next_token)
 {
-	int tmp = 0;
 	while (offset < size) {
-		if (data[offset+0] == 0x54 &&
-			data[offset+1] == 0x4f &&
-			data[offset+2] == 0x4b &&
-			data[offset+3] == 0x4e &&
+		if (data[offset+0] == 'T' &&
+			data[offset+1] == 'O' &&
+			data[offset+2] == 'K' &&
+			data[offset+3] == 'N' &&
 			data[offset+4] == 0x1) {
-			if(parse_token(data, size, offset, next_token))
-				return offset+1;
+			if(parse_token(data, size, &offset, next_token))
+				return offset;
 		}
 		offset += 1;
 	}
@@ -127,8 +116,10 @@ int main (int argc, char *argv[])
 	char input_name[255];
 	char output_name[255];
 	input_name[0] = '\0';
-	uint8_t in_data[0x40000];
+	uint8_t in_data[TOKEN_SIZE];
 	int fd;
+	int use_stdout = 1;
+	FILE *output = NULL;
 
 	snprintf(input_name, 255, DEFAULT_TOKEN_INPUT);
 
@@ -166,17 +157,25 @@ int main (int argc, char *argv[])
 		perror("open()");
 		exit(1);
 	}
-	read(fd, in_data, 0x40000);
+	if (use_stdout)
+	     output = stdout;
+	else
+	     output = fopen(output_name, "r");
+	if (!output)
+	     perror("open output");
+
+	lseek(fd, 0x5000, SEEK_SET);
+	read(fd, in_data, TOKEN_SIZE);
 	
-	uint32_t offset = 0x5000;
-	fprintf(use_stdout ? stdout : output, "[tokens]\n");
+	uint32_t offset = 0;
+	fprintf(output, "[tokens]\n");
 	while(1)
 	{
 		struct token tok;
-		offset = find_next_token(in_data, 0x40000, offset, &tok);
+		offset = find_next_token(in_data, TOKEN_SIZE, offset, &tok);
 		if (offset == 0) 
 			break;
-		token_write_output(&tok);
+		token_write_output(&tok, output);
 		token_free(&tok);
 	}
 
