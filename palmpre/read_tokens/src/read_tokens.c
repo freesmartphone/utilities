@@ -72,7 +72,7 @@ int parse_token(uint8_t *data, uint32_t size, uint32_t* offset, struct token *ne
 	/* key starts at 0x14 and there seems to be no stored length so we have to
 	   to calculate its length first */
 	new_token->key = strndup (&cur_data[KEY_OFFSET], MAX_KEY_LEN);
-	int value_len = (cur_data[8] << 0) | (data[9] << 8);
+	int value_len = (((int)cur_data[8])) + (((int)cur_data[9]) << 8);
 	new_token->value = strndup(&cur_data[VALUE_OFFSET], value_len);
 #ifdef DEBUG
 	fprintf(stderr,"found new token (key = '%s', value = '%s')\n",
