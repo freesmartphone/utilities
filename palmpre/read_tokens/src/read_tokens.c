@@ -160,7 +160,7 @@ int main (int argc, char *argv[])
 	if (use_stdout)
 	     output = stdout;
 	else
-	     output = fopen(output_name, "r");
+	     output = fopen(output_name, "w");
 	if (!output)
 	     perror("open output");
 
