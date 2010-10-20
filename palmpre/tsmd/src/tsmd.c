@@ -174,6 +174,8 @@ static void read_and_send(int source_fd, int dest_fd)
 
     if (ret < 0) {
       die("ts_read");
+    } else if (ret == 0) {
+        continue;
     }
 
     send_uinput_event(dest_fd, EV_ABS, ABS_X, samp.x);
