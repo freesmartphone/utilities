@@ -1,5 +1,5 @@
 
-CONFIG_WEBOS_MEDIA_TARGET_SIZE = 6.5G
+CONFIG_WEBOS_MEDIA_TARGET_SIZE = 6.0G
 
 all:
 
@@ -23,17 +23,14 @@ memload: build/unpacked-doctor/resources/nova-installer-image-castle.uImage
 .PHONY: memboot 
 memboot: recover build/unpacked-doctor/resources/nova-installer-image-castle.uImage
 	novacom -w boot mem:// < build/unpacked-doctor/resources/nova-installer-image-castle.uImage
-	@sleep 10
 
 .PHONY: reboot
 reboot:
 	novacom -w run file://sbin/tellbootie || true
-	@sleep 10
 
 .PHONY: recover
 recover:
 	novacom -w run file://sbin/tellbootie recover || true
-	@sleep 10
 
 .PHONY: backup
 backup: mount
@@ -69,7 +66,7 @@ mount: unmount lvm-setup
 	done
 	@echo "Mounting /dev/mmcblk0p2"
 	@novacom -w run file://bin/mkdir -- -p /tmp/boot
-	@novacom -w run file://bin/mount -- /dev/mmcblk0p2 /tmp/boot -o ro
+	@novacom -w run file://bin/mount -- /dev/mmcblk0p2 /tmp/boot -o rw
 
 .PHONY: unmount
 unmount:
@@ -78,13 +75,17 @@ unmount:
 	  ( novacom -w run file://bin/umount -- /tmp/$$f 2> /dev/null || true ) ; \
 	done
 
+.PHONY: umount-fso
+unmount-fso:
+	novacom -w run file://bin/umount -- /tmp/fso 2> /dev/null || true
+
 .PHONY: mount-fso
-mount-fso: lvm-setup
+mount-fso: lvm-setup unmount-fso
 	novacom -w run file://bin/mkdir -- -p /tmp/fso
 	novacom -w run file://bin/mount -- /dev/mapper/store-fso /tmp/fso -o rw
 
 .PHONY: lvm-resize
-lvm-resize: unmount lvm-setup
+lvm-resize: unmount unmount-fso lvm-setup
 	@echo "Now we are resizing lvm partition to get some space for FSO/SHR ..."
 	novacom -w run file://usr/sbin/lvm.static -- lvresize -f -L $(CONFIG_WEBOS_MEDIA_TARGET_SIZE) /dev/mapper/store-media 2> /dev/null || true
 	novacom -w run file://usr/sbin/mkdosfs -- -F 32 /dev/mapper/store-media 2> /dev/null || true
@@ -92,19 +93,34 @@ lvm-resize: unmount lvm-setup
 	novacom -w run file://sbin/mkfs.ext3 /dev/store/fso 2> /dev/null || true
 
 .PHONY: flash-image
-flash-image: mount-fso
+flash-image: mount-fso 
 ifneq (${IMAGE},undefined)
 	@if [ "${IMAGE}" == "" ] ; then \
 		echo "You have to specify an correct image file (.tar.gz)!" ; false ; \
 	fi
 
 	@echo "Starting to flash the given image file '$(IMAGE)' to the device ..."
-	novacom -w run file://bin/rm -- -rf /tmp/fso/* 2> /dev/null || true
-	novacom put file://mnt/fso/$(IMAGE) < $(IMAGE) 2> /dev/null || true
-	novacom -w run file://bin/tar -- -xzf /tmp/fso/$(IMAGE) -C /tmp/fso 2> /dev/null || true
-
+	novacom -w run file://bin/rm -- -rf /tmp/fso/*
+	novaterm put file://tmp/fso/$(shell basename $(IMAGE)) < $(IMAGE)
+	novacom -w run file://bin/tar -- -xzf /tmp/fso/$(shell basename $(IMAGE)) -C /tmp/fso 2> /dev/null || true
+	novacom -w run file://bin/rm -- /tmp/fso/$(shell basename $(IMAGE)) 2> /dev/null || true
 else
 	@echo "You have to specify an correct image file (.tar.gz)!"
+endif
+
+.PHONY: flash-kernel
+flash-kernel: mount
+ifneq (${IMAGE},undefined)
+	@if [ "${IMAGE}" == "" ] ; then \
+		echo "You have to specify an correct kernel image file (uImage)!" ; false ; \
+	fi
+
+	novacom -w run file://bin/rm -- /tmp/boot/uImage 2> /dev/null || true
+	novaterm put file://tmp/boot/$(shell basename $(IMAGE)) < $(IMAGE) 2> /dev/null || true
+	novacom -w run file://bin/ln -- -s $(shell basename $(IMAGE)) /tmp/boot/uImage 2> /dev/null || true
+
+else
+	@echo "You have to specify an correct kernel image file (uImage)!" 
 endif
 
 clean: 
