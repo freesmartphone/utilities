@@ -27,12 +27,12 @@
 #include <stdint.h>
 
 #define DEFAULT_TOKEN_INPUT			"/dev/mmcblk0p1"
-#define DEBUG 1
 #define KEY_OFFSET 0x14
 #define MAX_KEY_LEN 0x10
 #define VALUE_OFFSET ((KEY_OFFSET) + 0x10)
 #define TOKEN_OFFSET 0x5000
 #define TOKEN_SIZE 0x1000
+
 struct token
 {
 	uint8_t *value;
