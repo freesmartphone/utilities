@@ -1,4 +1,4 @@
-
+/* vim: set expandtab noai ts=4 sw=4: */
 /*
  * tsmd -- Touchscreen management daemon
  *

@@ -1,4 +1,4 @@
-
+/* vim: set expandtab noai ts=4 sw=4: */
 /*
  * tsmd -- Touchscreen management daemon
  *
@@ -36,17 +36,11 @@
 static void init_cy8mrln(int fd)
 {
     static int scanrate = 60;
-
     static int verbose = 0;
-
     static int wot_threshold = 22;
-
     static int sleepmode = CY8MRLN_ON_STATE;
-
     static int wot_scanrate = WOT_SCANRATE_512HZ;
-
     static int timestamp_mode = 1;
-
 
     ioctl(fd, CY8MRLN_IOCTL_SET_VERBOSE_MODE, &verbose);
     ioctl(fd, CY8MRLN_IOCTL_SET_SCANRATE, &scanrate);
