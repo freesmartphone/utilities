@@ -256,6 +256,8 @@ static void read_and_send(int source_fd, int dest_fd)
 
 int daemonize(void)
 {
+    int rc;
+
     /* process ID and Session ID */
     pid_t pid, sid;
 
@@ -307,7 +309,7 @@ int daemonize(void)
     }
     sprintf(str, "%d\n", getpid());
     /* record pid to lock file */
-    write(lfp, str, strlen(str));
+    rc = write(lfp, str, strlen(str));
 
     /* Close out the standard file descriptors */
     close(STDIN_FILENO);
@@ -318,10 +320,9 @@ int daemonize(void)
 void parse_config(char *config)
 {
     FILE *fp = fopen(config, "r");
-
     char buf[1024];
-
     int len = 0;
+    char *rc = NULL;
 
     buf[1023] = '\0';
     if (fp == NULL)
@@ -333,7 +334,7 @@ void parse_config(char *config)
     }
     while (!feof(fp))
     {
-        fgets(buf, 1023, fp);
+        rc = fgets(buf, 1023, fp);
         len = strnlen(buf, 1023);
         if (buf[len - 1] == '\n')
             buf[len - 1] = '\0';
