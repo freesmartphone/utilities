@@ -30,13 +30,16 @@
 #include <getopt.h>
 #include <netdb.h>
 #include <linux/uinput.h>
+#include <signal.h>
 
 #include "tsmd.h"
 
 #define CONFIG_FILE "/etc/tsmd.conf"
 
-int no_foreground = 1;
-int network_port = 0;
+unsigned int no_foreground = 1;
+unsigned int network_port = 0;
+unsigned int interrupt_read_and_send = 0;
+unsigned int need_reopen_touchscreen = 0;
 char network_addr[BUF_SIZE] = "\0";
 char device_node[BUF_SIZE] = "\0";
 
@@ -92,6 +95,11 @@ int open_touchscreen_device(void)
     }
 
     return fd;
+}
+
+void close_touchscreen_device(int fd)
+{
+    close(fd);
 }
 
 int open_uinput_device(void)
@@ -179,13 +187,9 @@ int send_uinput_event(int fd, __u16 type, __u16 code, __s32 value)
 static void read_and_send(int source_fd, int dest_fd)
 {
     struct tsdev *ts;
-
     char *tsdevice = NULL;
-
     struct ts_sample samp;
-
     int ret;
-
     int in_movement = 0;
 
     ts = malloc(sizeof (struct tsdev));
@@ -203,7 +207,7 @@ static void read_and_send(int source_fd, int dest_fd)
         die("ts_config");
     }
 
-    while (1)
+    while (!interrupt_read_and_send)
     {
         ret = ts_read(ts, &samp, 1);
 
@@ -251,6 +255,20 @@ static void read_and_send(int source_fd, int dest_fd)
             }
         }
         send_uinput_event(dest_fd, EV_SYN, SYN_REPORT, 0);
+    }
+}
+
+void handle_signals(int signum)
+{
+    switch (signum)
+    {
+        case SIGUSR1:
+            interrupt_read_and_send = 1;
+            break;
+        case SIGUSR2:
+            interrupt_read_and_send = 0;
+            need_reopen_touchscreen = 1;
+            break;
     }
 }
 
@@ -362,28 +380,29 @@ void parse_config(char *config)
     }
 }
 
+struct option opts[] = {
+    {"foreground", no_argument, NULL, 'f'},
+    {"node", required_argument, NULL, 'n'},
+    {"addr", required_argument, NULL, 'a'},
+    {"port", required_argument, NULL, 'p'},
+    {"help", no_argument, NULL, 'h'},
+    {NULL, no_argument, NULL, 0}
+};
+
 int main(int argc, char *argv[])
 {
     opterr = 0;
     int option_index;
-
     int chr;
-
-    struct option opts[] = {
-        {"foreground", no_argument, NULL, 'f'},
-        {"node", required_argument, NULL, 'n'},
-        {"addr", required_argument, NULL, 'a'},
-        {"port", required_argument, NULL, 'p'},
-        {"help", no_argument, NULL, 'h'},
-        {NULL, no_argument, NULL, 0}
-    };
     int showhelp = 0;
-
     int source_fd;
-
     int uinput_fd;
 
-    //parse config before arguments. This makes it possible to override the config
+    /* setup our signal handlers */
+    signal(SIGUSR1, handle_signals);
+    signal(SIGUSR2, handle_signals);
+
+    /* parse config before arguments. This makes it possible to override the config */
     parse_config(CONFIG_FILE);
 
     while (1)
@@ -437,6 +456,28 @@ int main(int argc, char *argv[])
     {
         daemonize();
     }
+    
+    /*
+     * We have here two nested work loops as we need to interrupt the inner loop when we
+     * get the SIGUSR1 signal and restart it when the SIGUSR2 signal arrives. This is
+     * necessary as when the device turn of it's screen or goes into suspend then the
+     * touchscreen supplies afterwards curious results. So we have to restart it then.
+     */
+    interrupt_read_and_send = 0;
+    need_reopen_touchscreen = 0;
+    while (1)
+    {
+        /* chekc if read/send is currently interrupted */
+        if (!interrupt_read_and_send)
+        {
+            if (need_reopen_touchscreen)
+            {
+                close_touchscreen_device(source_fd);
+                source_fd = open_touchscreen_device();
+                need_reopen_touchscreen = 0;
+            }
 
-    read_and_send(source_fd, uinput_fd);
+            read_and_send(source_fd, uinput_fd);
+        }
+    }
 }
