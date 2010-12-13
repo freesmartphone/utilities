@@ -1,0 +1,61 @@
+
+fso-installer - A small utility to install a FSO/SHR image on the Palm Pre device
+==================================================================================
+
+Cause we are lacking a real flash process on the palm pre device currently we have
+work around this with using the novacom utility from palm. The fso-installer 
+utility is using novacom to flash a .tar.gz rootfs image or a uImage kernel image 
+to the device and to help with the lvm resize process. 
+
+1. Preparation
+
+First to use the fso-installer we need two things:
+
+- novacom (developer.palm.com)
+- webos doctor (1.4.5 is the last tested version) (see webos-internals wiki)
+
+Put the webos-doctor file in the downloads directory and you are ready to move on.
+
+
+2. Resize LVM partition layout
+
+If you already did this manually, skip this step and move on to 3. Otherwise you have
+to put your device in recover mode (power off the devie, hold volume up and put in the
+usb cable connected to a computer). If your device is in recover mode type:
+
+# make memload
+
+This loads the nova installer from webOS into device ram and execute it. Now type the 
+following to backup all files on the device (including the very important device tokens):
+
+# make backup
+
+This creates a backup/ folder in the current directory which contains one subdirectory per
+device you connect. One device is identified by it's internal id. In the device directory
+will be after the backup process several files which contains the data from the device.
+This are:
+- rootfs.tar.gz
+- mmcblk0p1.bak (full binary dump of the /dev/mmcblk0p1 partition (contains bootloader, nvram and tokens))
+- varfs.tar.gz
+- boot.tar.gz
+- media.tar.gz
+
+How long the backup process takes depends on how much data you have on the media partition
+of your pre device.
+
+After you have done the backup we now want to resize the LVM partition layout to get some
+free space for FSO/SHR. To archive this there is the 'lvm-resize' make target. Execute it
+with (if you want to change to resulting size of the new create fso lvm partition edit the
+config.mk file and change the CONFIG_WEBOS_MEDIA_TARGET_SIZE variable to a lower value):
+
+# make lvm-resize
+
+This should take some time including reformatting the media partition (this means if you
+want to use webos afterwards you have to restore the webOS media partition before you boot
+into webos, see chapter "X. Restore webOS media partition from backup")
+
+TODO
+
+X. Restore webOS media partition from backup
+
+TODO
