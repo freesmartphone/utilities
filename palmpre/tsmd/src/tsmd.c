@@ -264,10 +264,12 @@ void handle_signals(int signum)
     {
         case SIGUSR1:
             interrupt_read_and_send = 1;
+            signal(SIGUSR1, handle_signals);
             break;
         case SIGUSR2:
             interrupt_read_and_send = 0;
             need_reopen_touchscreen = 1;
+            signal(SIGUSR2, handle_signals);
             break;
     }
 }
