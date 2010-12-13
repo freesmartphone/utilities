@@ -40,23 +40,6 @@ int network_port = 0;
 char network_addr[BUF_SIZE] = "\0";
 char device_node[BUF_SIZE] = "\0";
 
-static void init_cy8mrln(int fd)
-{
-    static int scanrate = 60;
-    static int verbose = 0;
-    static int wot_threshold = 22;
-    static int sleepmode = CY8MRLN_ON_STATE;
-    static int wot_scanrate = WOT_SCANRATE_512HZ;
-    static int timestamp_mode = 1;
-
-    ioctl(fd, CY8MRLN_IOCTL_SET_VERBOSE_MODE, &verbose);
-    ioctl(fd, CY8MRLN_IOCTL_SET_SCANRATE, &scanrate);
-    ioctl(fd, CY8MRLN_IOCTL_SET_TIMESTAMP_MODE, &timestamp_mode);
-    ioctl(fd, CY8MRLN_IOCTL_SET_SLEEPMODE, &sleepmode);
-    ioctl(fd, CY8MRLN_IOCTL_SET_WOT_SCANRATE, &wot_scanrate);
-    ioctl(fd, CY8MRLN_IOCTL_SET_WOT_THRESHOLD, &wot_threshold);
-}
-
 static int open_network_socket(char *address, int port)
 {
     int socket_fd;
@@ -101,8 +84,6 @@ int open_touchscreen_device(void)
         {
             die("Failed to open touchscreen device node");
         }
-
-        init_cy8mrln(fd);
     }
     else if (network_addr[0] != 0)
     {
