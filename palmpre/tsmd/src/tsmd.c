@@ -33,6 +33,13 @@
 
 #include "tsmd.h"
 
+#define CONFIG_FILE "/etc/tsmd.conf"
+
+int no_foreground = 1;
+int network_port = 0;
+char network_addr[BUF_SIZE] = "\0";
+char device_node[BUF_SIZE] = "\0";
+
 static void init_cy8mrln(int fd)
 {
     static int scanrate = 60;
@@ -80,6 +87,30 @@ static int open_network_socket(char *address, int port)
     }
 
     return socket_fd;
+}
+
+int open_touchscreen_device(void)
+{
+    int fd = -1;
+
+    if (device_node[0] != 0)
+    {
+        // open real touch screen device node
+        fd = open(device_node, O_RDONLY);
+        if (fd < 0)
+        {
+            die("Failed to open touchscreen device node");
+        }
+
+        init_cy8mrln(fd);
+    }
+    else if (network_addr[0] != 0)
+    {
+        // open network socket
+        fd = open_network_socket(network_addr, network_port);
+    }
+
+    return fd;
 }
 
 int open_uinput_device(void)
@@ -303,17 +334,6 @@ int daemonize(void)
     close(STDERR_FILENO);
 }
 
-//glibc has a daemon function. 
-int no_foreground = 1;
-
-int network_port = 0;
-
-char network_addr[BUF_SIZE] = "\0";
-
-char device_node[BUF_SIZE] = "\0";
-
-#define CONFIG_FILE "/etc/tsmd.conf"
-
 void parse_config(char *config)
 {
     FILE *fp = fopen(config, "r");
@@ -420,29 +440,15 @@ int main(int argc, char *argv[])
     printf("daemon = %i", no_foreground);
 #endif
 
-    if (showhelp || (network_addr[0] == 0 && device_node[0] == 0)
-        || (network_addr[0] != 0 && network_port == 0))
+    if (showhelp || 
+        (network_addr[0] == 0 && device_node[0] == 0) || 
+        (network_addr[0] != 0 && network_port == 0))
     {
         printf("Usage: tsmd -n <device node> -a <network address> -p <network port> -f\n");
         exit(EXIT_FAILURE);
     }
 
-    if (device_node[0] != 0)
-    {
-        // open real touch screen device node
-        source_fd = open(device_node, O_RDONLY);
-        if (source_fd < 0)
-        {
-            die("Failed to open touchscreen device node");
-        }
-        init_cy8mrln(source_fd);
-    }
-    else if (network_addr[0] != 0)
-    {
-        // open network socket
-        source_fd = open_network_socket(network_addr, network_port);
-    }
-
+    source_fd = open_touchscreen_device();
     uinput_fd = open_uinput_device();
 
     if (no_foreground)
