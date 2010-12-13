@@ -469,7 +469,7 @@ int main(int argc, char *argv[])
     need_reopen_touchscreen = 0;
     while (1)
     {
-        /* chekc if read/send is currently interrupted */
+        /* check if read/send is currently interrupted */
         if (!interrupt_read_and_send)
         {
             if (need_reopen_touchscreen)
@@ -480,6 +480,13 @@ int main(int argc, char *argv[])
             }
 
             read_and_send(source_fd, uinput_fd);
+        }
+        else
+        {
+            /* We are currently interrupt and should not read and send any events */
+            /* NOTE: we use pause() here as we don't want to stay in a busy wait infinite
+             * loop */
+            pause();
         }
     }
 }
