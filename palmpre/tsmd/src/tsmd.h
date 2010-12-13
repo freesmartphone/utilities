@@ -1,3 +1,4 @@
+
 /*
  * tsmd -- Touchscreen management daemon
  *
@@ -41,39 +42,42 @@
 #define CY8MRLN_IOCTL_SET_WOT_SCANRATE   _IOW('c', 0x22, int)
 
 /* PSoC Power State */
-enum {
-  CY8MRLN_OFF_STATE = 0,
-  CY8MRLN_SLEEP_STATE,
-  CY8MRLN_ON_STATE
-};
+enum
+    {
+        CY8MRLN_OFF_STATE = 0,
+        CY8MRLN_SLEEP_STATE,
+        CY8MRLN_ON_STATE
+    };
 
 /* WOT Scan Rate Index */
-enum {
-  WOT_SCANRATE_512HZ = 0,
-  WOT_SCANRATE_256HZ,
-  WOT_SCANRATE_171HZ,
-  WOT_SCANRATE_128HZ
-};
+enum
+    {
+        WOT_SCANRATE_512HZ = 0,
+        WOT_SCANRATE_256HZ,
+        WOT_SCANRATE_171HZ,
+        WOT_SCANRATE_128HZ
+    };
 
 /* daemon lock file */
 #define LOCK_FILE "/var/lock/tsmd.lock"
 
 /* from tslib-private.h */
-struct tsdev {
-  int fd;
-  struct tslib_module_info *list;
-  struct tslib_module_info *list_raw; /* points to position in 'list' where raw reads
-                                         come from.  default is the position of the
-                                         ts_read_raw module. */
-  unsigned int res_x;
-  unsigned int res_y;
-  int rotation;
-};
+struct tsdev
+    {
+        int fd;
+        struct tslib_module_info *list;
+        struct tslib_module_info *list_raw;     /* points to position in 'list' where raw reads
+                                                   come from.  default is the position of the
+                                                   ts_read_raw module. */
+        unsigned int res_x;
+        unsigned int res_y;
+        int rotation;
+    };
 
 static char *devs[] = {
-  "/dev/input/uinput",
-  "/dev/uinput",
-  NULL
+    "/dev/input/uinput",
+    "/dev/uinput",
+    NULL
 };
 
 #define die(str, args...) do { \
