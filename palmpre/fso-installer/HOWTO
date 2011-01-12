@@ -1,0 +1,103 @@
+fso-installer - A small utility to install a FSO/SHR image on the Palm Pre/pre2 device
+=====================================================================================
+
+HOWTO INSTALL FSO/SHR:
+=====================
+plug your devide to your computer with the usb cable and put it in dev mode cf webos-internal
+wget makefile in a new dedicated directory
++x
+make install-all || mkdir downloads
+wget webos-doctor in downloads
+make install-all
+
+HOWTO switch OS:
+===============
+plug your devide to your computer with the usb cable and put it in recovery mode cf webos-internal
+make switch-boot
+make reboot
+
+HOWTO update your all FSO/SHR:
+=======================
+WARNING: it will remove everything of your FSO/SHR partition
+plug your devide to your computer with the usb cable and put it in recovery mode cf webos-internal
+make update-all
+make reboot
+
+HOWTO update your kernel:
+=======================
+plug your devide to your computer with the usb cable and put it in recovery mode cf webos-internal
+make memload
+make update-kernel
+make reboot
+
+HOWTO update your rootfs:
+=======================
+WARNING: it will remove everything of your FSO/SHR partition
+plug your devide to your computer with the usb cable and put it in recovery mode cf webos-internal
+make memload
+make update-rootfs
+make reboot
+
+target by target description:
+============================
+WARNING You are on your own here, understand them before using them, especialy dependencies
+
+# make install-all :
+  pass through all needed target to install FSO on your palm :
+
+# make switch-boot :
+  switchs from one OS to an other (FSO or WebOS).
+  your device needs to be in recovery mode
+
+# make memboot :
+  is for booting nova-installer when you are in webos.
+  This loads the nova installer from webOS into device ram and execute it (i.e boots it).
+
+# make memload :
+  is for booting nova-installer from recovery mode
+
+# make reboot :
+  is for rebooting the device
+
+# make recover :
+  is for rebooting the device in recovery mode
+
+# make backup :
+  This creates a backup/ folder in the current directory which contains one subdirectory per
+  device you connect. One device is identified by it's internal id. In the device directory
+  will be after the backup process several files which contains the data from the device.
+  This are:
+  - rootfs.tar.gz
+  - mmcblk0p1.bak (full binary dump of the /dev/mmcblk0p1 partition (contains bootloader, nvram and tokens))
+  - varfs.tar.gz
+  - boot.tar.gz
+  - media.tar.gz
+
+  How long the backup process takes depends on how much data you have on the media partition
+  of your pre device.
+
+# make mount
+
+# make unmount
+
+# make umount-fso
+
+# make mount-fso
+
+# make lvm-setup
+
+# make lvm-resize
+  create a new partition from the media partition: split it and format them in ext3 and in fat32 .
+  all data will be erased . see '# make restore-data' to restore back your data.
+
+# make flash-image
+  install FSO's image to the device
+
+# make flash-kernel
+  install FSO's kernel to the device
+
+# make setup-init
+  setup init to boot FSO at startup
+
+# make restore-data
+  mounts media/internal partition and restores back data you had here.
