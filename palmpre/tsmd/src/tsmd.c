@@ -227,6 +227,7 @@ static void read_and_send(int source_fd, int dest_fd)
             // if we were in movement before, movement is now finished an we can send a
             // BTN_TOUCH up event
             send_uinput_event(dest_fd, EV_KEY, BTN_TOUCH, 0);
+            send_uinput_event(dest_fd, EV_ABS, ABS_PRESSURE, 0);
             in_movement = 0;
 #ifdef DEBUG
             printf("finger up\n");
