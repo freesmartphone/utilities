@@ -12,6 +12,7 @@ CONFIG_WEBOS_MEDIA_TARGET_SIZE = 06.0G
 
 #DO NOT MODIFY ANY OF THOSE FOLLOWING LINES
 #####################
+DOWNLOADDIRECTORY= downloads
 SUPPORTEDDEVICES = pre pre2
 ifeq ($(filter ${TARGET},${SUPPORTEDDEVICES}),)
 $(error You did not enter a proper TARGET)
@@ -23,8 +24,8 @@ endif
 
 ifeq (${TARGET},pre)
 NOVAINSTALLER = nova-installer-image-castle.uImage
-IMAGE = lite-palmpre.tar.gz
-KERNEL = uImage-palmpre.bin
+IMAGE ?= $(DOWNLOADDIRECTORY)/lite-palmpre.tar.gz
+KERNEL ?= $(DOWNLOADDIRECTORY)/uImage-palmpre.bin
 ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
 $(error CONFIG_WEBOS_MEDIA_TARGET_SIZE needs to be bigger than 00.5G)
 endif
@@ -36,8 +37,8 @@ endif
 
 ifeq (${TARGET},pre2)
 NOVAINSTALLER = nova-installer-image-roadrunner.uImage
-IMAGE = lite-palmpre2.tar.gz
-KERNEL = uImage-palmpre2.bin
+IMAGE ?= $(DOWNLOADDIRECTORY)/lite-palmpre2.tar.gz
+KERNEL ?= $(DOWNLOADDIRECTORY)/uImage-palmpre2.bin
 ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
 $(error CONFIG_WEBOS_MEDIA_TARGET_SIZE needs to be bigger than 00.5G)
 endif
@@ -94,7 +95,7 @@ endif
 
 check-webosdoctor:
 ifeq ($(wildcard downloads/webosdoctor*.jar),) 
-	@echo "You have to download WebOS Doctor jar yourself and put it in downloads/ , take a look here http://www.webos-internals.org/wiki/Webos_Doctor_Versions "
+	@echo "You have to download WebOS Doctor jar yourself and put it in downloads/ , take a look here http://www.webos-internals.org/wiki/Webos_Doctor_Versions " && false
 else
 	@echo "downloads/webosdoctor*.jar present"
 endif
@@ -218,7 +219,7 @@ ifneq (${IMAGE},undefined)
 
 	@echo "Starting to flash the given image file '$(IMAGE)' to the device ..."
 	novacom -w run file://bin/rm -- -rf /tmp/fso/*
-	novaterm put file://tmp/fso/$(shell basename $(IMAGE)) < downloads/$(IMAGE)
+	novaterm put file://tmp/fso/$(shell basename $(IMAGE)) < $(IMAGE)
 	novacom -w run file://bin/tar -- -xzf /tmp/fso/$(shell basename $(IMAGE)) -C /tmp/fso 2> /dev/null || true
 	novacom -w run file://bin/rm -- /tmp/fso/$(shell basename $(IMAGE)) 2> /dev/null || true
 else
@@ -234,7 +235,7 @@ ifneq (${KERNEL},undefined)
 	fi
 
 	@echo "Starting to flash the given kernel file '$(KERNEL)' to the device ..."
-	novaterm put file://tmp/boot/$(shell basename $(KERNEL)) < downloads/$(KERNEL)
+	novaterm put file://tmp/boot/$(shell basename $(KERNEL)) < $(KERNEL)
 
 
 else
@@ -294,9 +295,9 @@ switch-boot: memload mount
 
 .PHONY: update-kernel
 update-kernel: mount wget-kernel
-	@if [ $(shell date +%s -d '- $(shell stat -c%X downloads/$(KERNEL)) seconds') -le 10 ] ; then \
+	@if [ $(shell date +%s -d '- $(shell stat -c%X $(KERNEL)) seconds') -le 10 ] ; then \
 		echo "Updating your Kernel ..." ; \
-		novaterm put file://tmp/boot/$(shell basename $(KERNEL)) < downloads/$(KERNEL) ; \
+		novaterm put file://tmp/boot/$(shell basename $(KERNEL)) < $(KERNEL) ; \
 		echo "Kernel updated!" ; \
 	else \
 		echo "Nothing to do, you have already the last kernel" ;\
@@ -305,14 +306,14 @@ update-kernel: mount wget-kernel
 
 .PHONY: update-rootfs
 update-rootfs: mount-fso wget-image
-	@if [ $(shell date +%s -d '- $(shell stat -c%X downloads/$(IMAGE)) seconds') -le 10 ] ; then \
+	@if [ $(shell date +%s -d '- $(shell stat -c%X $(IMAGE)) seconds') -le 10 ] ; then \
 		echo "Removing old rootfs and creating new one ..." ; \
 		echo -e "#!/bin/sh \n rm -rf /tmp/fso/* ;\n" > eraser ; \
 		chmod +x eraser ; \
 		novaterm put file://tmp/eraser < eraser ; \
 		rm eraser ; \
 		novacom -w run file://tmp/eraser ; \
-		novaterm put file://tmp/fso/$(shell basename $(IMAGE)) < downloads/$(IMAGE) ;\
+		novaterm put file://tmp/fso/$(shell basename $(IMAGE)) < $(IMAGE) ;\
 		novacom -w run file://bin/tar -- -xzf /tmp/fso/$(shell basename $(IMAGE)) -C /tmp/fso 2> /dev/null || true;\
 		novacom -w run file://bin/rm -- /tmp/fso/$(shell basename $(IMAGE)) ;\
 		echo "Root filesystem updated!" ; \
