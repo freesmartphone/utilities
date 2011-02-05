@@ -26,6 +26,7 @@ ifeq (${TARGET},pre)
 NOVAINSTALLER = nova-installer-image-castle.uImage
 IMAGE ?= $(DOWNLOADDIRECTORY)/lite-palmpre.tar.gz
 KERNEL ?= $(DOWNLOADDIRECTORY)/uImage-palmpre.bin
+BOOTR ?= bootr-palmpre_0.1.tar.gz
 ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
 $(error CONFIG_WEBOS_MEDIA_TARGET_SIZE needs to be bigger than 00.5G)
 endif
@@ -39,6 +40,7 @@ ifeq (${TARGET},pre2)
 NOVAINSTALLER = nova-installer-image-roadrunner.uImage
 IMAGE ?= $(DOWNLOADDIRECTORY)/lite-palmpre2.tar.gz
 KERNEL ?= $(DOWNLOADDIRECTORY)/uImage-palmpre2.bin
+BOOTR ?= bootr-palmpre2_0.2.tar.gz
 ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
 $(error CONFIG_WEBOS_MEDIA_TARGET_SIZE needs to be bigger than 00.5G)
 endif
@@ -48,6 +50,7 @@ $(error $(shell echo |awk '{print 16.0 - ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}}')G i
 endif
 endif
 
+BOOTRURL = https://github.com/downloads/slyon/bootr/${BOOTR}
 
 all:
 
@@ -93,6 +96,11 @@ ifeq (${TARGET},pre2)
 	wget -N --directory-prefix=downloads/ http://amethyst.openembedded.net/~morphis/oe/palmpre/deploy/images/palmpre2/lite-palmpre2.tar.gz
 endif
 
+PHONY: wget-bootr
+wget-bootr: downloads-dir
+	@echo "Downloading Bootr for your device ..."
+	wget --no-check-certificate -N --directory-prefix=downloads/ $(BOOTRURL)
+
 check-webosdoctor:
 ifeq ($(wildcard downloads/webosdoctor*.jar),) 
 	@echo "You have to download WebOS Doctor jar yourself and put it in downloads/ , take a look here http://www.webos-internals.org/wiki/Webos_Doctor_Versions " && false
@@ -102,7 +110,7 @@ endif
 
 
 .PHONY: wget-stuff
-wget-stuff: wget-kernel wget-image check-webosdoctor
+wget-stuff: wget-kernel wget-image wget-bootr check-webosdoctor
 
 #
 ###################
@@ -246,21 +254,15 @@ else
 	@echo "downloads/${KERNEL} is missing / You have to specify an correct kernel image file (uImage)!" 
 endif
 
-
-.PHONY: setup-init
-setup-init: mount
-	@echo "Setting up init script ..."
-	novacom -w run file://bin/cp -- /tmp/boot/sbin/init /tmp/boot/sbin/init.fso
-	novacom -w run file://bin/mv -- /tmp/boot/sbin/init /tmp/boot/sbin/init.webos
-	echo -e "#!/bin/sh \n cd /tmp/boot/sbin ;\n ln -s init.fso init ;\n" >> switch
-	chmod +x switch
-	novaterm put file://tmp/switch < switch
-	rm switch
-	novacom -w run file://tmp/switch
-	novacom -w run file://bin/sed -- -i -e 's#/dev/mapper/store-root#/dev/mapper/store-fso#g' -e 's#\ ro\ #\ rw\ #g' /tmp/boot/sbin/init.fso
-	novacom -w run file://bin/rm -- /tmp/boot/uImage 2> /dev/null || true
-	novacom -w run file://bin/ln -- -s $(shell basename $(KERNEL)) /tmp/boot/uImage 2> /dev/null || true
-
+.PHONY: install-bootr
+install-bootr: unmount wget-bootr
+	@echo "Installing Bootr to your device ..."
+	novacom -w run file://bin/mount -- /dev/mmcblk0p2 /boot
+	novaterm put file://boot/$(shell basename $(BOOTR)) < downloads/$(BOOTR)
+	novacom -w run file://bin/tar -- -xzf /boot/$(shell basename $(BOOTR)) -C /boot 2> /dev/null || true
+	novacom -w run file://bin/rm -- /boot/$(shell basename $(BOOTR)) 2> /dev/null || true
+	novacom -w run file://boot/bootr/bin/install.sh install
+	@echo "Bootr installed!"
 
 .PHONY: restore-media
 restore-media:
@@ -274,28 +276,9 @@ restore-media:
 	novacom -w run file://bin/umount -- /tmp/media ; \
 
 
-.PHONY: install-all												#TODO TEST IT!
-install-all: wget-stuff memboot backup lvm-resize restore-media flash-image flash-kernel setup-init reboot
+.PHONY: install-all
+install-all: wget-stuff memboot backup lvm-resize restore-media flash-image flash-kernel install-bootr reboot
 
-
-.PHONY: switch-boot
-switch-boot: memload mount
-	@if [ $$(novacom -w run file://bin/ls -- -l /tmp/boot/sbin/init | cut -c 85-) == "webos" ] ; then \
-		echo "Switching to FSO" ; \
-		echo -e "#!/bin/sh \n cd /tmp/boot/sbin ;\n rm init ;\n ln -s init.fso init ;\n cd /tmp/boot ;\n rm uImage ;\n ln -s ${KERNEL} uImage ;\n" > switch ; \
-		chmod +x switch ; \
-		novaterm put file://tmp/switch < switch ; \
-		rm switch ; \
-		novacom -w run file://tmp/switch ; \
-	elif [ $$(novacom -w run file://bin/ls -- -l /tmp/boot/sbin/init | cut -c 85-) == "fso" ] ; then \
-		echo "Switching to WebOS" ; \
-		echo -e "#!/bin/sh \n cd /tmp/boot/sbin ;\n rm init ;\n ln -s init.webos init ;\n cd /tmp/boot ;\n rm uImage ;\n ln -s uImage-2.6.24-palm* uImage ;\n" > switch ; \
-		chmod +x switch ; \
-		novaterm put file://tmp/switch < switch ; \
-		rm switch ; \
-		novacom -w run file://tmp/switch ; \
-	fi
-	@echo "Done!"
 
 .PHONY: update-kernel
 update-kernel: mount wget-kernel
@@ -306,7 +289,6 @@ update-kernel: mount wget-kernel
 	else \
 		echo "Nothing to do, you have already the last kernel" ;\
 	fi
-
 
 .PHONY: update-rootfs
 update-rootfs: mount-fso wget-image
@@ -324,7 +306,6 @@ update-rootfs: mount-fso wget-image
 	else \
 		echo "Nothing to do, you have already the last rootfs" ;\
 	fi
-
 
 .PHONY: update-all
 update-all: memload update-kernel update-rootfs
