@@ -209,9 +209,13 @@ lvm-resize: unmount unmount-fso lvm-setup
 	novacom -w run file://usr/sbin/lvm.static -- lvcreate -l 100%FREE -n fso store 2> /dev/null || true
 	novacom -w run file://sbin/mkfs.ext3 /dev/store/fso 2> /dev/null || true
 
+.PHONY: erase-image
+erase-image: unmount-fso
+	@echo "Erasing old image; This may take some time ..."
+	novacom -w run file://sbin/mkfs.ext3 -- /dev/store/fso &> /dev/null || true
 
 .PHONY: flash-image
-flash-image: mount-fso 
+flash-image: erase-image mount-fso
 ifneq (${IMAGE},undefined)
 	@if [ "${IMAGE}" == "" ] ; then \
 		echo "downloads/${IMAGE} is missing / You have to specify an correct image file (.tar.gz)!" ; false ; \
