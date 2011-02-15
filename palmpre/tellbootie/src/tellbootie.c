@@ -23,15 +23,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define LINUX_REBOOT_MAGIC1 		0xfee1dead
-#define LINUX_REBOOT_MAGIC2 		0x28121969
-#define LINUX_REBOOT_CMD_RESTART	0xa1b2c3d4
- 
 int main(int argc, char *argv[])
 {
 	char *arg = NULL;
 	if (argc == 2) 
 		arg = argv[1];
-	reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART, arg);
+	reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, arg);
 	return 0;
 }
