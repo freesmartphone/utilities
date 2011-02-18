@@ -3,23 +3,37 @@
 # should we call unmount
 
 #####################
-# Select "pre" or "pre2".
-TARGET = pre
+# Select "pre", "preplus" or "pre2".
+TARGET = preplus
 # define the size you want to let on your media partition of WebOS: 00.5G < X < 07.5G (15.5G for a pre2)
 # It NEEDS to be formated as XX.XG
-CONFIG_WEBOS_MEDIA_TARGET_SIZE = 06.0G
+CONFIG_WEBOS_MEDIA_TARGET_SIZE = 05.5G
 
 
 #DO NOT MODIFY ANY OF THOSE FOLLOWING LINES
 #####################
-DOWNLOADDIRECTORY= downloads
-SUPPORTEDDEVICES = pre pre2
+DOWNLOADDIRECTORY = downloads
+SUPPORTEDDEVICES = pre preplus pre2
 ifeq ($(filter ${TARGET},${SUPPORTEDDEVICES}),)
 $(error You did not enter a proper TARGET)
 endif
 
 ifneq ($(shell echo ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}|wc -c),6)
 $(error Wrong CONFIG_WEBOS_MEDIA_TARGET_SIZE format!!)
+endif
+
+ifeq (${TARGET},preplus)
+ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
+$(error CONFIG_WEBOS_MEDIA_TARGET_SIZE needs to be bigger than 00.5G)
+endif
+ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '>' '15.5G'),1)
+$(error $(shell echo |awk '{print 8.0 - ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}}')G is left to FSO/SHR, It is too small .\
+ You need to decrease CONFIG_WEBOS_MEDIA_TARGET_SIZE)
+endif
+# We just have to verify the size of the media partition for the preplus device
+# different than for the pre device. All other things are the same so we switch
+# over here to TARGET = pre
+TARGET = pre
 endif
 
 ifeq (${TARGET},pre)
@@ -68,7 +82,7 @@ build/unpacked-doctor/resources/nova-installer-image: build/unpacked-doctor/reso
 #####################
 # download stuff
 
-downloads-dir:
+downloads-dir: downloads
 ifeq ($(wildcard downloads/),) 
 	@mkdir downloads
 	@echo "downloads/ directory created"
