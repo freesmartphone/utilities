@@ -35,6 +35,9 @@
 #include "tsmd.h"
 
 #define CONFIG_FILE "/etc/tsmd.conf"
+#define SYSFS_DISPLAY_STATE "/sys/class/display/lcd.0/state"
+
+#define DEBUG
 
 unsigned int no_foreground = 1;
 unsigned int network_port = 0;
@@ -184,6 +187,41 @@ int send_uinput_event(int fd, __u16 type, __u16 code, __s32 value)
     }
 }
 
+static int open_display()
+{
+    int fd = -1;
+
+    fd = open(SYSFS_DISPLAY_STATE, O_RDONLY);
+    if (fd < 0)
+    {
+        fprintf(stderr, "%s: could not open sysfs display node at '%s'\n", strerror(errno), SYSFS_DISPLAY_STATE);
+        exit(1);
+    }
+
+    printf("DEBUG: successfully opened display\n");
+
+    return fd;
+}
+
+static int check_display_state(int fd)
+{
+    int bread = 0;
+    char buffer[1];
+
+    bread = read(fd, &buffer, sizeof(buffer));
+    if ( bread > 0 && buffer[0] == '1' )
+    {
+        return 1;
+    }
+
+    return 0;
+}
+
+static void close_display(int fd)
+{
+    close(fd);
+}
+
 static void read_and_send(int source_fd, int dest_fd)
 {
     struct tsdev *ts;
@@ -191,6 +229,8 @@ static void read_and_send(int source_fd, int dest_fd)
     struct ts_sample samp;
     int ret;
     int in_movement = 0;
+    fd_set readfds, exceptfds;
+    int display_fd, max_fd;
 
     ts = malloc(sizeof (struct tsdev));
     if (ts)
@@ -207,55 +247,97 @@ static void read_and_send(int source_fd, int dest_fd)
         die("ts_config");
     }
 
+    int need_check_display = 0;
+    int dstate = 0;
+
     while (!interrupt_read_and_send)
     {
-        ret = ts_read(ts, &samp, 1);
+        display_fd = open_display();
 
+        // We have to read the sysfs each time we iterate to get the select thing with it
+        // correct!
+        dstate = check_display_state(display_fd);
+
+        if ( need_check_display && dstate )
+        {
+            interrupt_read_and_send = 1;
+            need_check_display = 0;
+            close_display( display_fd );
+            break;
+        }
+
+        FD_ZERO(&readfds);
+        FD_ZERO(&exceptfds);
+        FD_SET(source_fd, &readfds);
+        FD_SET(display_fd, &exceptfds);
+
+        max_fd = display_fd > source_fd ? display_fd : source_fd;
+        ret = select(source_fd + 1, &readfds, NULL, &exceptfds, NULL);
         if (ret < 0)
         {
-            die("ts_read");
+            die("select");
         }
-        else if (ret == 0)
+
+        if ( FD_ISSET(display_fd, &exceptfds) )
         {
+            need_check_display = 1;
+            close_display(display_fd);
             continue;
         }
 
-        send_uinput_event(dest_fd, EV_ABS, ABS_X, samp.x);
-        send_uinput_event(dest_fd, EV_ABS, ABS_Y, samp.y);
-        if (samp.pressure == 0 && in_movement)
-        {
-            // if we were in movement before, movement is now finished an we can send a
-            // BTN_TOUCH up event
-            send_uinput_event(dest_fd, EV_KEY, BTN_TOUCH, 0);
-            send_uinput_event(dest_fd, EV_ABS, ABS_PRESSURE, 0);
-            in_movement = 0;
-#ifdef DEBUG
-            printf("finger up\n");
-#endif
-        }
-        else if (samp.pressure > 0)
-        {
-            if (!in_movement)
-            {
-                in_movement = 1;
+        close_display(display_fd);
 
-                // if we have a pressure then report button touch down event
-                send_uinput_event(dest_fd, EV_KEY, BTN_TOUCH, 1);
-#ifdef DEBUG
-                printf("finger down\n");
-#endif
-            }
-            else
+        if ( FD_ISSET(source_fd, &readfds) )
+        {
+            ret = ts_read(ts, &samp, 1);
+
+            if (ret < 0)
             {
-                //Report pressure 
-#ifdef DEBUG
-                printf("%ld.%06ld: %6d %6d %6d\n", samp.tv.tv_sec, samp.tv.tv_usec, samp.x, samp.y,
-                       samp.pressure);
-#endif
-                send_uinput_event(dest_fd, EV_ABS, ABS_PRESSURE, samp.pressure);
+                die("ts_read");
             }
+            else if (ret == 0)
+            {
+                continue;
+            }
+
+            send_uinput_event(dest_fd, EV_ABS, ABS_X, samp.x);
+            send_uinput_event(dest_fd, EV_ABS, ABS_Y, samp.y);
+            if (samp.pressure == 0 && in_movement)
+            {
+                // if we were in movement before, movement is now finished an we can send a
+                // BTN_TOUCH up event
+                send_uinput_event(dest_fd, EV_KEY, BTN_TOUCH, 0);
+                send_uinput_event(dest_fd, EV_ABS, ABS_PRESSURE, 0);
+                in_movement = 0;
+#ifdef DEBUG
+                printf("finger up\n");
+#endif
+            }
+            else if (samp.pressure > 0)
+            {
+                if (!in_movement)
+                {
+                    in_movement = 1;
+
+                    // if we have a pressure then report button touch down event
+                    send_uinput_event(dest_fd, EV_KEY, BTN_TOUCH, 1);
+#ifdef DEBUG
+                    printf("finger down\n");
+#endif
+                }
+                else
+                {
+                    //Report pressure 
+#ifdef DEBUG
+                    printf("%ld.%06ld: %6d %6d %6d\n", samp.tv.tv_sec, samp.tv.tv_usec, samp.x, samp.y,
+                           samp.pressure);
+#endif
+                    send_uinput_event(dest_fd, EV_ABS, ABS_PRESSURE, samp.pressure);
+                }
+            }
+
+            send_uinput_event(dest_fd, EV_SYN, SYN_REPORT, 0);
         }
-        send_uinput_event(dest_fd, EV_SYN, SYN_REPORT, 0);
     }
 }
 
@@ -397,13 +479,18 @@ int main(int argc, char *argv[])
     opterr = 0;
     int option_index;
     int chr;
-    int showhelp = 0;
+    int showhelp = 0, ret = 0;
     int source_fd;
     int uinput_fd;
+    int display_fd;
+    int need_check_display, dstate;
+    fd_set exceptfds;
 
     /* setup our signal handlers */
+#if 0
     signal(SIGUSR1, handle_signals);
     signal(SIGUSR2, handle_signals);
+#endif
 
     /* parse config before arguments. This makes it possible to override the config */
     parse_config(CONFIG_FILE);
@@ -441,7 +528,7 @@ int main(int argc, char *argv[])
     printf("device node = %s\n", device_node);
     printf("network port = %d\n", network_port);
     printf("network addr = %s\n", network_addr);
-    printf("daemon = %i", no_foreground);
+    printf("daemon = %i\n", no_foreground);
 #endif
 
     if (showhelp || 
@@ -459,7 +546,7 @@ int main(int argc, char *argv[])
     {
         daemonize();
     }
-    
+
     /*
      * We have here two nested work loops as we need to interrupt the inner loop when we
      * get the SIGUSR1 signal and restart it when the SIGUSR2 signal arrives. This is
@@ -468,6 +555,7 @@ int main(int argc, char *argv[])
      */
     interrupt_read_and_send = 0;
     need_reopen_touchscreen = 0;
+    need_check_display = 0;
     while (1)
     {
         /* check if read/send is currently interrupted */
@@ -475,7 +563,7 @@ int main(int argc, char *argv[])
         {
             if (need_reopen_touchscreen)
             {
-                close_touchscreen_device(source_fd);
+                // close_touchscreen_device(source_fd);
                 source_fd = open_touchscreen_device();
                 need_reopen_touchscreen = 0;
             }
@@ -484,10 +572,33 @@ int main(int argc, char *argv[])
         }
         else
         {
-            /* We are currently interrupt and should not read and send any events */
-            /* NOTE: we use pause() here as we don't want to stay in a busy wait infinite
-             * loop */
-            pause();
+            display_fd = open_display();
+
+            dstate = check_display_state(display_fd);
+
+            if ( need_check_display && dstate )
+            {
+                interrupt_read_and_send = 0;
+                need_reopen_touchscreen = 1;
+                close_display(display_fd);
+                continue;
+            }
+
+            FD_ZERO(&exceptfds);
+            FD_SET(display_fd, &exceptfds);
+
+            ret = select(display_fd + 1, NULL, NULL, &exceptfds, NULL);
+            if ( ret < 0 )
+            {
+                die( "select" );
+            }
+
+            if ( FD_ISSET(display_fd, &exceptfds) )
+            {
+                need_check_display = 1;
+            }
+
+            close_display( display_fd );
         }
     }
 }
