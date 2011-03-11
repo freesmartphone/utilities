@@ -1,10 +1,26 @@
-#TODO :
-# verify all install-all steps by step when done in a raw
-# should we call unmount
+#
+# Copyright (C) 2011 by Sylvain Paré <sylvain.pare@gmail.com>
+#                       Simon Busch <morphis@gravedo.de>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+#
+
 
 #####################
 # Select "pre", "preplus" or "pre2".
-TARGET = preplus
+TARGET = unknown
 # define the size you want to let on your media partition of WebOS: 00.5G < X < 07.5G (15.5G for a pre2)
 # It NEEDS to be formated as XX.XG
 CONFIG_WEBOS_MEDIA_TARGET_SIZE = 05.5G
@@ -264,7 +280,7 @@ ifneq (${KERNEL},undefined)
 	fi
 
 	@echo "Starting to flash the given kernel file '$(KERNEL)' to the device ..."
-	novaterm put file://tmp/boot/$(shell basename $(KERNEL)) < $(KERNEL)
+	novaterm put file://tmp/boot/uImage-palmpre.bin < $(KERNEL)
 
 
 else
