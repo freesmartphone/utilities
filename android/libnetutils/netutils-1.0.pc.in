@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libnetutils
+Description: Some little helpers to deal with network interface configration on Linux
+Version: @VERSION@
+Libs: -L${libdir} -lnetutils
+Cflags: -I${includedir}/netutils
+
+
