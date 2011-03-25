@@ -26,6 +26,8 @@ TARGET = unknown
 CONFIG_WEBOS_MEDIA_TARGET_SIZE = 05.5G
 # Base url for downloading kernels and images build by OE
 ORIGIN_URL = http://amethyst.openembedded.net/~morphis/oe/palmpre/deploy/images
+# Name of your webos doctor file
+WEBOS_DOCTOR_NAME = webosdoctorp100ueu-wr.jar
 
 #DO NOT MODIFY ANY OF THOSE FOLLOWING LINES
 #####################
@@ -55,6 +57,7 @@ endif
 
 ifeq (${TARGET},pre)
 NOVAINSTALLER = nova-installer-image-castle.uImage
+NOVA_IMAGE_NAME = nova-cust-image-castle.rootfs.tar.gz
 IMAGE ?= $(DOWNLOADDIRECTORY)/lite-palmpre.tar.gz
 KERNEL ?= $(DOWNLOADDIRECTORY)/uImage-palmpre.bin
 BOOTR ?= bootr-palmpre_0.1.tar.gz
@@ -70,6 +73,7 @@ endif
 
 ifeq (${TARGET},pre2)
 NOVAINSTALLER = nova-installer-image-roadrunner.uImage
+NOVA_IMAGE_NAME = nova-cust-image-roadrunner.rootfs.tar.gz
 IMAGE ?= $(DOWNLOADDIRECTORY)/lite-palmpre2.tar.gz
 KERNEL ?= $(DOWNLOADDIRECTORY)/uImage-palmpre2.bin
 BOOTR ?= bootr-palmpre2_0.2.tar.gz
@@ -87,15 +91,19 @@ BOOTRURL = https://github.com/downloads/slyon/bootr/${BOOTR}
 
 all:
 
-build/unpacked-doctor:
+build/unpacked-doctor: downloads/$(WEBOS_DOCTOR_NAME)
 	@mkdir -p build/unpacked-doctor
 
-build/unpacked-doctor/resources: build/unpacked-doctor check-webosdoctor
+build/unpacked-doctor/resources: build/unpacked-doctor
 	@echo "Extracting webos doctor ..."
-	@(cd build/unpacked-doctor; jar -xf ../../downloads/webosdoctor*.jar)
+	@(cd build/unpacked-doctor; jar -xf ../../downloads/$(WEBOS_DOCTOR_NAME))
 
 build/unpacked-doctor/resources/nova-installer-image: build/unpacked-doctor/resources
 	@(cd build/unpacked-doctor/resources; tar xf webOS.tar)
+
+build/unpacked-doctor/rootfs: build/unpacked-doctor/resources
+	@(mkdir build/unpacked-doctor/rootfs ; \
+	  tar xzf build/unpacked-doctor/resources/$(NOVA_IMAGE_NAME) -C build/unpacked-doctor/rootfs 2> /dev/null) || true
 
 
 #####################
@@ -104,9 +112,6 @@ build/unpacked-doctor/resources/nova-installer-image: build/unpacked-doctor/reso
 downloads-dir: downloads
 ifeq ($(wildcard downloads/),) 
 	@mkdir downloads
-	@echo "downloads/ directory created"
-else
-	@echo "downloads/ directory already present"
 endif
 
 wget-kernel: downloads-dir
@@ -134,16 +139,8 @@ wget-bootr: downloads-dir
 	@echo "Downloading Bootr for your device ..."
 	wget --no-check-certificate -N --directory-prefix=downloads/ $(BOOTRURL)
 
-check-webosdoctor:
-ifeq ($(wildcard downloads/webosdoctor*.jar),) 
-	@echo "You have to download WebOS Doctor jar yourself and put it in downloads/ , take a look here http://www.webos-internals.org/wiki/Webos_Doctor_Versions " && false
-else
-	@echo "downloads/webosdoctor*.jar present"
-endif
-
-
 .PHONY: wget-stuff
-wget-stuff: wget-kernel wget-image wget-bootr check-webosdoctor
+wget-stuff: wget-kernel wget-image wget-bootr
 
 #
 ###################
@@ -159,7 +156,7 @@ memload: build/unpacked-doctor/resources/nova-installer-image
 .PHONY: memboot 
 memboot: recover build/unpacked-doctor/resources/nova-installer-image
 	@echo "Transfer nova installer to device and reboot your device with it ..."
-	@novacom -w boot mem:// < build/unpacked-doctor/resources/${NOVAINSTALLER}
+	@novacom -w boot mem:// < build/unpacked-doctor/resources/${NOVAINSTALLER} 2> /dev/null || true
 
 
 .PHONY: reboot
@@ -173,7 +170,7 @@ reboot:
 .PHONY: recover
 recover:
 	@echo "Rebooting your device in recovery mode..."
-	@novacom -w run file://sbin/tellbootie recover || true
+	@novacom -w run file://sbin/tellbootie recover 2> /dev/null || true
 	@sleep 5
 	@echo "Done!"
 
@@ -202,9 +199,8 @@ backup: mount
 
 .PHONY: lvm-setup
 lvm-setup:
-	#NOTE: do we print something ?
-	novacom -w run file://usr/sbin/lvm.static -- vgscan --ignorelockingfailure 2> /dev/null || true
-	novacom -w run file://usr/sbin/lvm.static -- vgchange -ay --ignorelockingfailure 2> /dev/null || true
+	@novacom -w run file://usr/sbin/lvm.static -- vgscan --ignorelockingfailure 2> /dev/null || true
+	@novacom -w run file://usr/sbin/lvm.static -- vgchange -ay --ignorelockingfailure 2> /dev/null || true
 
 
 .PHONY: mount
@@ -232,23 +228,23 @@ unmount:
 .PHONY: unmount-fso
 unmount-fso:
 	@echo "Unmounting FSO partition ..."
-	novacom -w run file://bin/umount -- /tmp/fso 2> /dev/null || true
+	@novacom -w run file://bin/umount -- /tmp/fso 2> /dev/null || true
 
 
 .PHONY: mount-fso
 mount-fso: lvm-setup unmount-fso
 	@echo "Mounting FSO partition ..."
-	novacom -w run file://bin/mkdir -- -p /tmp/fso
-	novacom -w run file://bin/mount -- /dev/mapper/store-fso /tmp/fso -o rw
+	@novacom -w run file://bin/mkdir -- -p /tmp/fso
+	@novacom -w run file://bin/mount -- /dev/mapper/store-fso /tmp/fso -o rw
 
 
 .PHONY: lvm-resize
 lvm-resize: unmount unmount-fso lvm-setup
 	@echo "Now we are resizing lvm partition to get some space for FSO/SHR ..."
-	novacom -w run file://usr/sbin/lvm.static -- lvresize -f -L $(CONFIG_WEBOS_MEDIA_TARGET_SIZE) /dev/mapper/store-media 2> /dev/null || true
-	novacom -w run file://usr/sbin/mkdosfs -- -F 32 /dev/mapper/store-media 2> /dev/null || true
-	novacom -w run file://usr/sbin/lvm.static -- lvcreate -l 100%FREE -n fso store 2> /dev/null || true
-	novacom -w run file://sbin/mkfs.ext3 /dev/store/fso 2> /dev/null || true
+	@novacom -w run file://usr/sbin/lvm.static -- lvresize -f -L $(CONFIG_WEBOS_MEDIA_TARGET_SIZE) /dev/mapper/store-media 2> /dev/null || true
+	@novacom -w run file://usr/sbin/mkdosfs -- -F 32 /dev/mapper/store-media 2> /dev/null || true
+	@novacom -w run file://usr/sbin/lvm.static -- lvcreate -l 100%FREE -n fso store 2> /dev/null || true
+	@novacom -w run file://sbin/mkfs.ext3 /dev/store/fso 2> /dev/null || true
 
 .PHONY: erase-image
 erase-image: unmount-fso
@@ -351,3 +347,17 @@ update:
 clean: 
 	@echo "Cleanup everything ..."
 	@rm -rf build deps
+
+setup-extra: build/unpacked-doctor/rootfs
+	@sh scripts/setup-extra.sh
+
+install-extra: mount-fso
+	@if [ -d extra ] ; then \
+		echo "Installing extra files to device ..." ; \
+		rm -f build/extrafiles.tar ; \
+		( cd extra ; tar cf ../build/extra-files.tar * ); \
+		novaterm put file://tmp/extra-files.tar < build/extra-files.tar 2> /dev/null || true; \
+		novacom -w run file://bin/tar -- xf /tmp/extra-files.tar -C /tmp/fso 2> /dev/null || true ; \
+		novacom -w run file://bin/rm -- -f /tmp/extra-file.tar 2> /dev/null || true ; \
+	fi
+
