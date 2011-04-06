@@ -3,29 +3,22 @@ fso-installer - A small utility to install a FSO/SHR image on the Palm Pre/pre2 
 
 HOWTO INSTALL FSO/SHR:
 =====================
-plug your devide to your computer with the usb cable and put it in dev mode cf webos-internal
+plug your device to your computer with the usb cable and put it in dev mode cf webos-internal
 wget makefile in a new dedicated directory
-+x
-make install-all || mkdir downloads
+mkdir downloads
 wget webos-doctor in downloads
 make install-all
-
-HOWTO switch OS:
-===============
-plug your devide to your computer with the usb cable and put it in recovery mode cf webos-internal
-make switch-boot
-make reboot
 
 HOWTO update your all FSO/SHR:
 =======================
 WARNING: it will remove everything of your FSO/SHR partition
-plug your devide to your computer with the usb cable and put it in recovery mode cf webos-internal
+plug your device to your computer with the usb cable and put it in recovery mode cf webos-internal
 make update-all
 make reboot
 
 HOWTO update your kernel:
 =======================
-plug your devide to your computer with the usb cable and put it in recovery mode cf webos-internal
+plug your device to your computer with the usb cable and put it in recovery mode cf webos-internal
 make memload
 make update-kernel
 make reboot
@@ -33,7 +26,7 @@ make reboot
 HOWTO update your rootfs:
 =======================
 WARNING: it will remove everything of your FSO/SHR partition
-plug your devide to your computer with the usb cable and put it in recovery mode cf webos-internal
+plug your device to your computer with the usb cable and put it in recovery mode cf webos-internal
 make memload
 make update-rootfs
 make reboot
@@ -44,10 +37,6 @@ WARNING You are on your own here, understand them before using them, especialy d
 
 # make install-all :
   pass through all needed target to install FSO on your palm :
-
-# make switch-boot :
-  switchs from one OS to an other (FSO or WebOS).
-  your device needs to be in recovery mode
 
 # make memboot :
   is for booting nova-installer when you are in webos.

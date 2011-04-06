@@ -24,10 +24,11 @@ TARGET = unknown
 # define the size you want to let on your media partition of WebOS: 00.5G < X < 07.5G (15.5G for a pre2)
 # It NEEDS to be formated as XX.XG
 CONFIG_WEBOS_MEDIA_TARGET_SIZE = 05.5G
+
 # Base url for downloading kernels and images build by OE
-ORIGIN_URL = http://amethyst.openembedded.net/~morphis/oe/palmpre/deploy/images
+ORIGIN_URL = http://build.shr-project.org/shr-unstable/images/
 # Name of your webos doctor file
-WEBOS_DOCTOR_NAME = webosdoctorp100ueu-wr.jar
+WEBOS_DOCTOR_NAME = webosdoctor*.jar
 
 #DO NOT MODIFY ANY OF THOSE FOLLOWING LINES
 #####################
@@ -58,8 +59,8 @@ endif
 ifeq (${TARGET},pre)
 NOVAINSTALLER = nova-installer-image-castle.uImage
 NOVA_IMAGE_NAME = nova-cust-image-castle.rootfs.tar.gz
-IMAGE ?= $(DOWNLOADDIRECTORY)/lite-palmpre.tar.gz
-KERNEL ?= $(DOWNLOADDIRECTORY)/uImage-palmpre.bin
+IMAGEFILENAME = full-palmpre.tar.gz
+KERNELFILENAME = uImage-palmpre.bin
 BOOTR ?= bootr-palmpre_0.1.tar.gz
 DOWNLOAD_BASE_URL = "${ORIGIN_URL}/palmpre"
 ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
@@ -74,8 +75,8 @@ endif
 ifeq (${TARGET},pre2)
 NOVAINSTALLER = nova-installer-image-roadrunner.uImage
 NOVA_IMAGE_NAME = nova-cust-image-roadrunner.rootfs.tar.gz
-IMAGE ?= $(DOWNLOADDIRECTORY)/lite-palmpre2.tar.gz
-KERNEL ?= $(DOWNLOADDIRECTORY)/uImage-palmpre2.bin
+IMAGEFILENAME = full-palmpre2.tar.gz
+KERNELFILENAME = uImage-palmpre2.bin
 BOOTR ?= bootr-palmpre2_0.2.tar.gz
 DOWNLOAD_BASE_URL = ${ORIGIN_URL}/palmpre2
 ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
@@ -87,6 +88,8 @@ $(error $(shell echo |awk '{print 16.0 - ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}}')G i
 endif
 endif
 
+IMAGE ?= $(DOWNLOADDIRECTORY)/$(IMAGEFILENAME)
+KERNEL ?= $(DOWNLOADDIRECTORY)/$(KERNELFILENAME)
 BOOTRURL = https://github.com/downloads/slyon/bootr/${BOOTR}
 
 all:
@@ -115,24 +118,12 @@ ifeq ($(wildcard downloads/),)
 endif
 
 wget-kernel: downloads-dir
-ifeq (${TARGET},pre)
-	@echo "Downloading kernel for your pre ..."
-	wget -N --directory-prefix=downloads/ ${DOWNLOAD_BASE_URL}/uImage-palmpre.bin
-endif
-ifeq (${TARGET},pre2)
-	@echo "Downloading kernel for your pre2 ..."
-	wget -N --directory-prefix=downloads/ ${DOWNLOAD_BASE_URL}/uImage-palmpre2.bin
-endif
+	@echo "Downloading kernel for your device ..."
+	wget -N --directory-prefix=downloads/ ${DOWNLOAD_BASE_URL}/$(KERNELFILENAME)
 
 wget-image: downloads-dir
-ifeq (${TARGET},pre)
-	@echo "Downloading image for your pre ..."
-	wget -N --directory-prefix=downloads/ ${DOWNLOAD_BASE_URL}/lite-palmpre.tar.gz
-endif
-ifeq (${TARGET},pre2)
-	@echo "Downloading image for your pre2 ..."
-	wget -N --directory-prefix=downloads/ ${DOWNLOAD_BASE_URL}/lite-palmpre2.tar.gz
-endif
+	@echo "Downloading image for your device ..."
+	wget -N --directory-prefix=downloads/ ${DOWNLOAD_BASE_URL}/$(IMAGEFILENAME)
 
 PHONY: wget-bootr
 wget-bootr: downloads-dir
