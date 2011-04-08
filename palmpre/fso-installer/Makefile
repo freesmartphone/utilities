@@ -301,34 +301,20 @@ install-all: wget-stuff memboot backup lvm-resize restore-media flash-image flas
 
 
 .PHONY: update-kernel
-update-kernel: mount wget-kernel
-	@if [ $(shell date +%s -d '- $(shell stat -c%X $(KERNEL)) seconds') -le 10 ] ; then \
-		echo "Updating your Kernel ..." ; \
-		novaterm put file://tmp/boot/$(shell basename $(KERNEL)) < $(KERNEL) ; \
-		echo "Kernel updated!" ; \
-	else \
-		echo "Nothing to do, you have already the last kernel" ;\
-	fi
+update-kernel: mount
+	echo "Updating your Kernel ..." ; \
+	novaterm put file://tmp/boot/$(shell basename $(KERNEL)) < $(KERNEL) ; \
+	echo "Kernel updated!" ; \
 
 .PHONY: update-rootfs
-update-rootfs: mount-fso wget-image
-	@if [ $(shell date +%s -d '- $(shell stat -c%X $(IMAGE)) seconds') -le 10 ] ; then \
-		echo "Removing old rootfs and creating new one ..." ; \
-		echo -e "#!/bin/sh \n rm -rf /tmp/fso/* ;\n" > eraser ; \
-		chmod +x eraser ; \
-		novaterm put file://tmp/eraser < eraser ; \
-		rm eraser ; \
-		novacom -w run file://tmp/eraser ; \
-		novaterm put file://tmp/fso/$(shell basename $(IMAGE)) < $(IMAGE) ;\
-		novacom -w run file://bin/tar -- -xzf /tmp/fso/$(shell basename $(IMAGE)) -C /tmp/fso 2> /dev/null || true;\
-		novacom -w run file://bin/rm -- /tmp/fso/$(shell basename $(IMAGE)) ;\
-		echo "Root filesystem updated!" ; \
-	else \
-		echo "Nothing to do, you have already the last rootfs" ;\
-	fi
+update-rootfs: erase-image mount-fso
+	novaterm put file://tmp/fso/$(shell basename $(IMAGE)) < $(IMAGE) ;\
+	novacom -w run file://bin/tar -- -xzf /tmp/fso/$(shell basename $(IMAGE)) -C /tmp/fso 2> /dev/null || true;\
+	novacom -w run file://bin/rm -- /tmp/fso/$(shell basename $(IMAGE)) ;\
+	echo "Root filesystem updated!" ; \
 
 .PHONY: update-all
-update-all: memload update-kernel update-rootfs
+update-all: wget-image wget-kernel memboot update-kernel update-rootfs reboot
 	@echo FSO/SHR up to date!
 
 .PHONY: update
