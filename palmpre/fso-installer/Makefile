@@ -61,7 +61,7 @@ NOVAINSTALLER = nova-installer-image-castle.uImage
 NOVA_IMAGE_NAME = nova-cust-image-castle.rootfs.tar.gz
 IMAGEFILENAME = full-palmpre.tar.gz
 KERNELFILENAME = uImage-palmpre.bin
-BOOTR ?= bootr-palmpre_0.1.tar.gz
+BOOTR ?= bootr-palmpre_0.3.tar.gz
 DOWNLOAD_BASE_URL = "${ORIGIN_URL}/palmpre"
 ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
 $(error CONFIG_WEBOS_MEDIA_TARGET_SIZE needs to be bigger than 00.5G)
@@ -77,7 +77,7 @@ NOVAINSTALLER = nova-installer-image-roadrunner.uImage
 NOVA_IMAGE_NAME = nova-cust-image-roadrunner.rootfs.tar.gz
 IMAGEFILENAME = full-palmpre2.tar.gz
 KERNELFILENAME = uImage-palmpre2.bin
-BOOTR ?= bootr-palmpre2_0.2.tar.gz
+BOOTR ?= bootr-palmpre2_0.3.tar.gz
 DOWNLOAD_BASE_URL = ${ORIGIN_URL}/palmpre2
 ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
 $(error CONFIG_WEBOS_MEDIA_TARGET_SIZE needs to be bigger than 00.5G)
