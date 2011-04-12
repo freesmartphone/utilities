@@ -168,14 +168,14 @@ wget-stuff: wget-kernel wget-image wget-bootr
 .PHONY: memload
 memload: build/unpacked-doctor/webos/.unpacked
 	@echo "Transfer nova installer to device and boot it ..."
-	@novaterm boot mem:// < build/unpacked-doctor/resources/${NOVAINSTALLER}
+	@novaterm boot mem:// < build/unpacked-doctor/webos/${NOVAINSTALLER}
 	@echo "Wait for device to come back ..."
 	@sleep 10
 
 .PHONY: memboot 
 memboot: recover build/unpacked-doctor/webos/.unpacked
 	@echo "Transfer nova installer to device and reboot your device with it ..."
-	@novacom -w boot mem:// < build/unpacked-doctor/resources/${NOVAINSTALLER} 2> /dev/null || true
+	@novacom -w boot mem:// < build/unpacked-doctor/webos/${NOVAINSTALLER} 2> /dev/null || true
 
 .PHONY: reboot
 reboot:
