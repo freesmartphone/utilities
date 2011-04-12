@@ -97,16 +97,20 @@ all:
 build/unpacked-doctor: downloads/$(WEBOS_DOCTOR_NAME)
 	@mkdir -p build/unpacked-doctor
 
-build/unpacked-doctor/resources: build/unpacked-doctor
+build/unpacked-doctor/resources/.unpacked: build/unpacked-doctor
 	@echo "Extracting webos doctor ..."
 	@(cd build/unpacked-doctor; jar -xf ../../downloads/$(WEBOS_DOCTOR_NAME))
+	@(touch build/unpacked-doctor/resources/.unpacked)
 
-build/unpacked-doctor/resources/nova-installer-image: build/unpacked-doctor/resources
-	@(cd build/unpacked-doctor/resources; tar xf webOS.tar)
+build/unpacked-doctor/webos/.unpacked: build/unpacked-doctor/resources/.unpacked
+	@(mkdir -p build/unpacked-doctor/webos)
+	@(tar xf build/unpacked-doctor/resources/webOS.tar -C build/unpacked-doctor/webos)
+	@(touch build/unpacked-doctor/webos/.unpacked)
 
-build/unpacked-doctor/rootfs: build/unpacked-doctor/resources
-	@(mkdir build/unpacked-doctor/rootfs ; \
-	  tar xzf build/unpacked-doctor/resources/$(NOVA_IMAGE_NAME) -C build/unpacked-doctor/rootfs 2> /dev/null) || true
+build/unpacked-doctor/rootfs/.unpacked: build/unpacked-doctor/webos/.unpacked
+	@(mkdir -p build/unpacked-doctor/rootfs ; \
+	  tar xzf build/unpacked-doctor/webos/$(NOVA_IMAGE_NAME) -C build/unpacked-doctor/rootfs 2> /dev/null) || true
+	@(touch build/unpacked-doctor/rootfs/.unpacked)
 
 
 #####################
@@ -137,7 +141,7 @@ wget-stuff: wget-kernel wget-image wget-bootr
 ###################
 
 .PHONY: memload
-memload: build/unpacked-doctor/resources/nova-installer-image
+memload: build/unpacked-doctor/webos/.unpacked
 	@echo "Transfer nova installer to device and boot it ..."
 	@novaterm boot mem:// < build/unpacked-doctor/resources/${NOVAINSTALLER}
 	@echo "Wait for device to come back ..."
@@ -145,7 +149,7 @@ memload: build/unpacked-doctor/resources/nova-installer-image
 
 
 .PHONY: memboot 
-memboot: recover build/unpacked-doctor/resources/nova-installer-image
+memboot: recover build/unpacked-doctor/webos/.unpacked
 	@echo "Transfer nova installer to device and reboot your device with it ..."
 	@novacom -w boot mem:// < build/unpacked-doctor/resources/${NOVAINSTALLER} 2> /dev/null || true
 
@@ -325,7 +329,8 @@ clean:
 	@echo "Cleanup everything ..."
 	@rm -rf build deps
 
-setup-extra: build/unpacked-doctor/rootfs
+setup-extra: build/unpacked-doctor/rootfs/.unpacked
+	@echo "Copying all extra files to extra directory ..."
 	@sh scripts/setup-extra.sh
 
 install-extra: mount-fso
