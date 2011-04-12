@@ -18,20 +18,25 @@
 #
 
 
-#####################
+###############################################################################
+# Configuration
+###############################################################################
+
 # Select "pre", "preplus" or "pre2".
 TARGET = unknown
-# define the size you want to let on your media partition of WebOS: 00.5G < X < 07.5G (15.5G for a pre2)
+# Define the size you want to let on your media partition of WebOS: 00.5G < X < 07.5G (15.5G for a pre2)
 # It NEEDS to be formated as XX.XG
 CONFIG_WEBOS_MEDIA_TARGET_SIZE = 05.5G
 
-# Base url for downloading kernels and images build by OE
+# Base URL for downloading kernels and images
 ORIGIN_URL = http://build.shr-project.org/shr-unstable/images/
 # Name of your webos doctor file
 WEBOS_DOCTOR_NAME = webosdoctor*.jar
 
-#DO NOT MODIFY ANY OF THOSE FOLLOWING LINES
-#####################
+###############################################################################
+# !!! DO NOT MODIFY ANY OF THE FOLLOWING LINES !!!
+###############################################################################
+
 DOWNLOADDIRECTORY = downloads
 SUPPORTEDDEVICES = pre preplus pre2
 ifeq ($(filter ${TARGET},${SUPPORTEDDEVICES}),)
@@ -92,7 +97,25 @@ IMAGE ?= $(DOWNLOADDIRECTORY)/$(IMAGEFILENAME)
 KERNEL ?= $(DOWNLOADDIRECTORY)/$(KERNELFILENAME)
 BOOTRURL = https://github.com/downloads/slyon/bootr/${BOOTR}
 
+###############################################################################
+# General
+###############################################################################
+
+.PHONY: all
 all:
+
+.PHONY: update
+update:
+	@echo TODO? update this makefile ?
+
+.PHONY: clean
+clean: 
+	@echo "Cleanup everything ..."
+	@rm -rf build deps
+
+###############################################################################
+# webOS doctor unpack stuff
+###############################################################################
 
 build/unpacked-doctor: downloads/$(WEBOS_DOCTOR_NAME)
 	@mkdir -p build/unpacked-doctor
@@ -113,32 +136,34 @@ build/unpacked-doctor/rootfs/.unpacked: build/unpacked-doctor/webos/.unpacked
 	@(touch build/unpacked-doctor/rootfs/.unpacked)
 
 
-#####################
+###############################################################################
 # download stuff
+##############################################################################
 
-downloads-dir: downloads
-ifeq ($(wildcard downloads/),) 
-	@mkdir downloads
-endif
+downloads:
+	@(mkdir -p downloads)
 
-wget-kernel: downloads-dir
+.PHONY: wget-kernel
+wget-kernel: downloads
 	@echo "Downloading kernel for your device ..."
 	wget -N --directory-prefix=downloads/ ${DOWNLOAD_BASE_URL}/$(KERNELFILENAME)
 
-wget-image: downloads-dir
+.PHONY: wget-kernel
+wget-image: downloads
 	@echo "Downloading image for your device ..."
 	wget -N --directory-prefix=downloads/ ${DOWNLOAD_BASE_URL}/$(IMAGEFILENAME)
 
 PHONY: wget-bootr
-wget-bootr: downloads-dir
+wget-bootr: downloads
 	@echo "Downloading Bootr for your device ..."
 	wget --no-check-certificate -N --directory-prefix=downloads/ $(BOOTRURL)
 
 .PHONY: wget-stuff
 wget-stuff: wget-kernel wget-image wget-bootr
 
-#
-###################
+###############################################################################
+# Device preparation
+###############################################################################
 
 .PHONY: memload
 memload: build/unpacked-doctor/webos/.unpacked
@@ -147,12 +172,10 @@ memload: build/unpacked-doctor/webos/.unpacked
 	@echo "Wait for device to come back ..."
 	@sleep 10
 
-
 .PHONY: memboot 
 memboot: recover build/unpacked-doctor/webos/.unpacked
 	@echo "Transfer nova installer to device and reboot your device with it ..."
 	@novacom -w boot mem:// < build/unpacked-doctor/resources/${NOVAINSTALLER} 2> /dev/null || true
-
 
 .PHONY: reboot
 reboot:
@@ -161,14 +184,12 @@ reboot:
 	@sleep 5
 	@echo "Done!"
 
-
 .PHONY: recover
 recover:
 	@echo "Rebooting your device in recovery mode..."
 	@novacom -w run file://sbin/tellbootie recover 2> /dev/null || true
 	@sleep 5
 	@echo "Done!"
-
 
 .PHONY: backup
 backup: mount
@@ -191,12 +212,10 @@ backup: mount
 	( novacom -w run file://bin/tar -- -C /tmp/media/ --totals -cf - . ) | \
 	  gzip -c > backup/$$id/media.tar.gz ; \
 
-
 .PHONY: lvm-setup
 lvm-setup:
 	@novacom -w run file://usr/sbin/lvm.static -- vgscan --ignorelockingfailure 2> /dev/null || true
 	@novacom -w run file://usr/sbin/lvm.static -- vgchange -ay --ignorelockingfailure 2> /dev/null || true
-
 
 .PHONY: mount
 mount: unmount lvm-setup
@@ -210,7 +229,6 @@ mount: unmount lvm-setup
 	@novacom -w run file://bin/mkdir -- -p /tmp/boot
 	@novacom -w run file://bin/mount -- /dev/mmcblk0p2 /tmp/boot -o rw
 
-
 .PHONY: unmount
 unmount:
 	@echo "Unmounting partitions ..."
@@ -219,12 +237,10 @@ unmount:
 	  ( novacom -w run file://bin/umount -- /tmp/$$f 2> /dev/null || true ) ; \
 	done
 
-
 .PHONY: unmount-fso
 unmount-fso:
 	@echo "Unmounting FSO partition ..."
 	@novacom -w run file://bin/umount -- /tmp/fso 2> /dev/null || true
-
 
 .PHONY: mount-fso
 mount-fso: lvm-setup unmount-fso
@@ -240,6 +256,10 @@ lvm-resize: unmount unmount-fso lvm-setup
 	@novacom -w run file://usr/sbin/mkdosfs -- -F 32 /dev/mapper/store-media 2> /dev/null || true
 	@novacom -w run file://usr/sbin/lvm.static -- lvcreate -l 100%FREE -n fso store 2> /dev/null || true
 	@novacom -w run file://sbin/mkfs.ext3 /dev/store/fso 2> /dev/null || true
+
+###############################################################################
+# Image flashing + erasing
+###############################################################################
 
 .PHONY: erase-image
 erase-image: unmount-fso
@@ -262,7 +282,6 @@ else
 	@echo "downloads/${IMAGE} is missing / You have to specify an correct image file (.tar.gz)!"
 endif
 
-
 .PHONY: flash-kernel
 flash-kernel: mount
 ifneq (${KERNEL},undefined)
@@ -272,8 +291,6 @@ ifneq (${KERNEL},undefined)
 
 	@echo "Starting to flash the given kernel file '$(KERNEL)' to the device ..."
 	novaterm put file://tmp/boot/uImage-palmpre.bin < $(KERNEL)
-
-
 else
 	@echo "downloads/${KERNEL} is missing / You have to specify an correct kernel image file (uImage)!" 
 endif
@@ -299,10 +316,8 @@ restore-media:
 	novacom -w run file://bin/rm -- /tmp/media/$(shell basename backup/$$id/media.tar.gz) ; \
 	novacom -w run file://bin/umount -- /tmp/media ; \
 
-
 .PHONY: install-all
 install-all: wget-stuff memboot backup lvm-resize restore-media flash-image flash-kernel install-bootr reboot
-
 
 .PHONY: update-kernel
 update-kernel: mount
@@ -321,18 +336,16 @@ update-rootfs: erase-image mount-fso
 update-all: wget-image wget-kernel memboot update-kernel update-rootfs reboot
 	@echo FSO/SHR up to date!
 
-.PHONY: update
-update: 
-	@echo TODO? update this makefile ?
+###############################################################################
+# Installing additional files
+###############################################################################
 
-clean: 
-	@echo "Cleanup everything ..."
-	@rm -rf build deps
-
+.PHONY: setup-extra
 setup-extra: build/unpacked-doctor/rootfs/.unpacked
 	@echo "Copying all extra files to extra directory ..."
 	@sh scripts/setup-extra.sh
 
+.PHONY: install-extra
 install-extra: mount-fso
 	@if [ -d extra ] ; then \
 		echo "Installing extra files to device ..." ; \
