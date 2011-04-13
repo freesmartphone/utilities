@@ -263,8 +263,9 @@ lvm-resize: unmount unmount-fso lvm-setup
 
 .PHONY: erase-image
 erase-image: unmount-fso
-	@echo "Erasing old image; This may take some time ..."
+	@echo "Erasing old image. This may take some time ..."
 	novacom -w run file://sbin/mkfs.ext3 -- /dev/store/fso &> /dev/null || true
+	@echo "Erasing done!"
 
 .PHONY: flash-image
 flash-image: erase-image mount-fso
@@ -321,16 +322,17 @@ install-all: wget-stuff memboot backup lvm-resize restore-media flash-image flas
 
 .PHONY: update-kernel
 update-kernel: mount
-	echo "Updating your Kernel ..." ; \
-	novaterm put file://tmp/boot/$(shell basename $(KERNEL)) < $(KERNEL) ; \
-	echo "Kernel updated!" ; \
+	@echo "Updating your Kernel ..."
+	novaterm put file://tmp/boot/$(shell basename $(KERNEL)) < $(KERNEL)
+	@echo "Kernel updated!"
 
 .PHONY: update-rootfs
 update-rootfs: erase-image mount-fso
-	novaterm put file://tmp/fso/$(shell basename $(IMAGE)) < $(IMAGE) ;\
-	novacom -w run file://bin/tar -- -xzf /tmp/fso/$(shell basename $(IMAGE)) -C /tmp/fso 2> /dev/null || true;\
-	novacom -w run file://bin/rm -- /tmp/fso/$(shell basename $(IMAGE)) ;\
-	echo "Root filesystem updated!" ; \
+	@echo "Updating your rootfs ..."
+	novaterm put file://tmp/fso/$(shell basename $(IMAGE)) < $(IMAGE)
+	novacom -w run file://bin/tar -- -xzf /tmp/fso/$(shell basename $(IMAGE)) -C /tmp/fso 2> /dev/null || true
+	novacom -w run file://bin/rm -- /tmp/fso/$(shell basename $(IMAGE))
+	@echo "Root filesystem updated!"
 
 .PHONY: update-all
 update-all: wget-image wget-kernel memboot update-kernel update-rootfs reboot
