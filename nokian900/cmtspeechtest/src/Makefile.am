@@ -5,6 +5,7 @@ NULL =
 VALAC_ARGS = \
 	--basedir $(top_srcdir) \
 	--vapidir ../vapi \
+	--pkg posix \
 	--pkg libcmtspeechdata \
 	--save-temps
 

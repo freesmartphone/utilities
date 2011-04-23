@@ -1,6 +1,6 @@
-/**
+/*
  * (C) 2011 Michael 'Mickey' Lauer <mlauer@vanille-media.de>
- **/
+ */
 
 [CCode (cprefix = "CMTSPEECH_", lower_case_cprefix = "cmtspeech_", cheader_filename = "cmtspeech.h")]
 namespace CmtSpeech
@@ -8,7 +8,7 @@ namespace CmtSpeech
 
     /* Enums */
 
-    [CCode (cprefix = "CMTSPEECH_STATE_", has_type_code = false, cheader_filename = "cmtspeech.h")]
+    [CCode (cname = "gint", cprefix = "CMTSPEECH_STATE_", has_type_id = false, cheader_filename = "cmtspeech.h")]
     public enum State
     {
         INVALID,
@@ -19,7 +19,7 @@ namespace CmtSpeech
         TEST_RAMP_PING_ACTIVE
     }
 
-    [CCode (cprefix = "CMTSPEECH_TR_", has_type_code = false, cheader_filename = "cmtspeech.h")]
+    [CCode (cname = "gint", cprefix = "CMTSPEECH_TR_", has_type_id = false, cheader_filename = "cmtspeech.h")]
     public enum Transition
     {
         INVALID,
@@ -36,13 +36,13 @@ namespace CmtSpeech
         12_UL_START
     }
 
-    [CCode (cprefix = "CMTSPEECH_BUFFER_TYPE_", has_type_code = false, cheader_filename = "cmtspeech.h")]
+    [CCode (cname = "gint", cprefix = "CMTSPEECH_BUFFER_TYPE_", has_type_id = false, cheader_filename = "cmtspeech.h")]
     public enum BufferType
     {
         PCM_S16_LE
     }
 
-    [CCode (cprefix = "CMTSPEECH_EVENT_", has_type_code = false, cheader_filename = "cmtspeech.h")]
+    [CCode (cname = "gint", cprefix = "CMTSPEECH_EVENT_", has_type_id = false, cheader_filename = "cmtspeech.h")]
     public enum EventType
     {
         CONTROL,
@@ -50,7 +50,7 @@ namespace CmtSpeech
         XRUN
     }
 
-    [CCode (cprefix = "CMTSPEECH_DATA_TYPE_", has_type_code = false, cheader_filename = "cmtspeech.h")]
+    [CCode (cname = "gint", cprefix = "CMTSPEECH_DATA_TYPE_", has_type_id = false, cheader_filename = "cmtspeech.h")]
     public enum FrameFlags
     {
         ZERO,
@@ -58,7 +58,7 @@ namespace CmtSpeech
         VALID
     }
 
-    [CCode (cprefix = "CMTSPEECH_SPC_FLAGS_", has_type_code = false, cheader_filename = "cmtspeech.h")]
+    [CCode (cname = "gint", cprefix = "CMTSPEECH_SPC_FLAGS_", has_type_id = false, cheader_filename = "cmtspeech.h")]
     public enum SpcFlags
     {
         SPEECH,
@@ -70,7 +70,7 @@ namespace CmtSpeech
         DTX_USED
     }
 
-    [CCode (cprefix = "CMTSPEECH_SAMPLE_RATE_", has_type_code = false, cheader_filename = "cmtspeech_msgs.h")]
+    [CCode (cname = "gint", cprefix = "CMTSPEECH_SAMPLE_RATE_", has_type_id = false, cheader_filename = "cmtspeech_msgs.h")]
     public enum SampleRate
     {
         NONE,
@@ -78,7 +78,7 @@ namespace CmtSpeech
         16KHZ
     }
 
-    [CCode (cprefix = "CMTSPEECH_TRACE_", has_type_code = false, cheader_filename = "cmtspeech_msgs.h")]
+    [CCode (cname = "gint", cprefix = "CMTSPEECH_TRACE_", has_type_id = false, cheader_filename = "cmtspeech_msgs.h")]
     public enum TraceType
     {
         ERROR,
@@ -122,22 +122,22 @@ namespace CmtSpeech
     public static int protocol_version();
     public static void init();
     [CCode (has_target = false)]
-    public delegate void cmtspeech_trace_handler_t( int priority, string message, va_list args );
-    public static void cmtspeech_trace_toggle( int priority, bool enabled );
-    public static int cmtspeech_set_trace_handler( cmtspeech_trace_handler_t func );
+    public delegate void trace_handler_t( int priority, string message, va_list args );
+    public static void trace_toggle( int priority, bool enabled );
+    public static int set_trace_handler( trace_handler_t func );
 
     /* Classes */
 
     [Compact]
-    [CCode (cprefix = "cmtspeech_", cname = "cmtspeech_t", cheader_filename = "cmtspeech.h")]
+    [CCode (cprefix = "cmtspeech_", cname = "cmtspeech_t", free_function = "cmtspeech_close", cheader_filename = "cmtspeech.h")]
     public class Connection
     {
         [CCode (cname = "cmtspeech_open")]
         public Connection();
 
-        public int close();
+        //public int close();
         public int descriptor();
-        public int check_pending( EventType flags_mask );
+        public int check_pending( out EventType flags_mask );
         public int read_event( Event event );
         public Transition event_to_state_transition( Event event );
 
@@ -151,17 +151,16 @@ namespace CmtSpeech
         public int state_change_call_connect( bool state );
         public int state_change_error();
 
-        public int ul_buffer_acquire( out Buffer buffer );
-        public int ul_buffer_release(t *context, Buffer buffer );
+        public int ul_buffer_acquire( out FrameBuffer buffer );
+        public int ul_buffer_release( FrameBuffer buffer );
 
-        public int dl_buffer_acquire( out Buffer buffer );
-        public int dl_buffer_release( Buffer buffer );
+        public int dl_buffer_acquire( out FrameBuffer buffer );
+        public int dl_buffer_release( FrameBuffer buffer );
 
         public SampleRate buffer_codec_sample_rate();
-        public SampleRate int buffer_sample_rate();
+        public SampleRate buffer_sample_rate();
 
-        public Buffer dl_buffer_find_with_data( uint8* data);
-        public Buffer dl_buffer_find_with_data( uint8* data);
+        public FrameBuffer dl_buffer_find_with_data( uint8* data);
 
         public string backend_name();
         public int backend_message( int type, int args, ... );
