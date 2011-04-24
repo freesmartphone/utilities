@@ -6,6 +6,7 @@ MainLoop loop;
 IOChannel channel;
 CmtSpeech.Connection connection;
 
+//===========================================================================
 public static void handleDataEvent()
 {
     debug( @"handleDataEvent during protocol state $(connection.protocol_state())" );
@@ -32,6 +33,7 @@ public static void handleDataEvent()
     }
 }
 
+//===========================================================================
 public static void handleControlEvent()
 {
     debug( @"handleControlEvent during protocol state $(connection.protocol_state())" );
@@ -74,6 +76,7 @@ public static void handleControlEvent()
     }
 }
 
+//===========================================================================
 public static bool onTimeout()
 {
     if ( connection != null )
@@ -85,6 +88,7 @@ public static bool onTimeout()
     return false; // don't call again
 }
 
+//===========================================================================
 public static bool onInputFromChannel( IOChannel source, IOCondition condition )
 {
     debug( "onInputFromChannel, condition = %d", condition );
@@ -129,8 +133,17 @@ public static bool onInputFromChannel( IOChannel source, IOCondition condition )
     return true;
 }
 
+//===========================================================================
+public static void SIGINT_handler( int signum )
+{
+    loop.quit();
+}
+
+//===========================================================================
 public static void main()
 {
+    Posix.signal( Posix.SIGINT, SIGINT_handler );
+
     debug( "initializing cmtspeed" );
     CmtSpeech.init();
 
@@ -147,11 +160,11 @@ public static void main()
     }
 
     var fd = connection.descriptor();
+
     if ( fd == -1 )
     {
         error( "File descriptor invalid" );
     }
-
     debug( "creating channel and mainloop" );
     loop = new MainLoop();
 
@@ -163,5 +176,9 @@ public static void main()
     debug( "--> loop" );
     loop.run();
     debug( "<-- loop" );
+
+    connection = null;
+    channel = null;
+    loop = null;
 }
 

@@ -10,6 +10,7 @@
 #include <cmtspeech.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #define _g_free0(var) (var = (g_free (var), NULL))
 #define _cmtspeech_close0(var) ((var == NULL) ? NULL : (var = (cmtspeech_close (var), NULL)))
@@ -32,7 +33,9 @@ const gchar* cmtspeech_transition_to_string (gint self);
 static const char* _cmtspeech_transition_to_string (gint value);
 gboolean onTimeout (void);
 gboolean onInputFromChannel (GIOChannel* source, GIOCondition condition);
+void SIGINT_handler (gint signum);
 void _vala_main (void);
+static void _SIGINT_handler_sighandler_t (gint signal);
 static gboolean _onInputFromChannel_gio_func (GIOChannel* source, GIOCondition condition, gpointer self);
 static gboolean _onTimeout_gsource_func (gpointer self);
 
@@ -70,7 +73,7 @@ void handleDataEvent (void) {
 	_tmp1_ = _cmtspeech_state_to_string (_tmp0_);
 	_tmp2_ = g_strconcat ("handleDataEvent during protocol state ", _tmp1_, NULL);
 	_tmp3_ = _tmp2_;
-	g_debug ("main.vala:11: %s", _tmp3_);
+	g_debug ("main.vala:12: %s", _tmp3_);
 	_g_free0 (_tmp3_);
 	memset (&dlbuf, 0, sizeof (struct cmtspeech_buffer_s));
 	memset (&ulbuf, 0, sizeof (struct cmtspeech_buffer_s));
@@ -80,18 +83,18 @@ void handleDataEvent (void) {
 	ok = _tmp5_;
 	if (ok == 0) {
 		gint _tmp6_;
-		g_debug ("main.vala:19: received DL packet w/ %u bytes", (guint) dlbuf.count);
+		g_debug ("main.vala:20: received DL packet w/ %u bytes", (guint) dlbuf.count);
 		_tmp6_ = cmtspeech_protocol_state (connection);
 		if (_tmp6_ == CMTSPEECH_STATE_ACTIVE_DLUL) {
 			struct cmtspeech_buffer_s _tmp7_ = {0};
 			gint _tmp8_;
-			g_debug ("main.vala:22: protocol state is ACTIVE_DLUL, uploading as well...");
+			g_debug ("main.vala:23: protocol state is ACTIVE_DLUL, uploading as well...");
 			_tmp8_ = cmtspeech_ul_buffer_acquire (connection, &_tmp7_);
 			 (&ulbuf);
 			ulbuf = _tmp7_;
 			ok = _tmp8_;
 			if (ulbuf.pcount == dlbuf.pcount) {
-				g_debug ("main.vala:26: looping DL packet to UL with %u payload bytes", (guint) dlbuf.pcount);
+				g_debug ("main.vala:27: looping DL packet to UL with %u payload bytes", (guint) dlbuf.pcount);
 				memcpy (ulbuf.payload, dlbuf.payload, (gsize) dlbuf.pcount);
 			}
 			cmtspeech_ul_buffer_release (connection, &ulbuf);
@@ -150,7 +153,7 @@ void handleControlEvent (void) {
 	_tmp1_ = _cmtspeech_state_to_string (_tmp0_);
 	_tmp2_ = g_strconcat ("handleControlEvent during protocol state ", _tmp1_, NULL);
 	_tmp3_ = _tmp2_;
-	g_debug ("main.vala:37: %s", _tmp3_);
+	g_debug ("main.vala:39: %s", _tmp3_);
 	_g_free0 (_tmp3_);
 	memset (&event, 0, sizeof (struct cmtspeech_event_s));
 	transition = 0;
@@ -159,7 +162,7 @@ void handleControlEvent (void) {
 	_tmp5_ = _tmp4_;
 	_tmp6_ = g_strconcat ("read event, type is ", _tmp5_, NULL);
 	_tmp7_ = _tmp6_;
-	g_debug ("main.vala:44: %s", _tmp7_);
+	g_debug ("main.vala:46: %s", _tmp7_);
 	_g_free0 (_tmp7_);
 	_g_free0 (_tmp5_);
 	_tmp8_ = cmtspeech_event_to_state_transition (connection, &event);
@@ -167,7 +170,7 @@ void handleControlEvent (void) {
 	switch (transition) {
 		case CMTSPEECH_TR_INVALID:
 		{
-			g_debug ("main.vala:50: ERROR: invalid state transition");
+			g_debug ("main.vala:52: ERROR: invalid state transition");
 			break;
 		}
 		case CMTSPEECH_TR_1_CONNECTED:
@@ -182,14 +185,14 @@ void handleControlEvent (void) {
 			_tmp9_ = _cmtspeech_transition_to_string (transition);
 			_tmp10_ = g_strconcat ("state transition ok, new state is ", _tmp9_, NULL);
 			_tmp11_ = _tmp10_;
-			g_debug ("main.vala:58: %s", _tmp11_);
+			g_debug ("main.vala:60: %s", _tmp11_);
 			_g_free0 (_tmp11_);
 			break;
 		}
 		case CMTSPEECH_TR_6_TIMING_UPDATE:
 		case CMTSPEECH_TR_7_TIMING_UPDATE:
 		{
-			g_debug ("main.vala:63: WARNING: modem UL timing update ignored");
+			g_debug ("main.vala:65: WARNING: modem UL timing update ignored");
 			break;
 		}
 		case CMTSPEECH_TR_10_RESET:
@@ -202,7 +205,7 @@ void handleControlEvent (void) {
 			_tmp12_ = _cmtspeech_transition_to_string (transition);
 			_tmp13_ = g_strconcat ("state transition ok, new state is ", _tmp12_, NULL);
 			_tmp14_ = _tmp13_;
-			g_debug ("main.vala:69: %s", _tmp14_);
+			g_debug ("main.vala:71: %s", _tmp14_);
 			_g_free0 (_tmp14_);
 			break;
 		}
@@ -230,7 +233,7 @@ gboolean onTimeout (void) {
 		_tmp2_ = _tmp1_;
 		_tmp3_ = g_strconcat ("change call state returned: ", _tmp2_, NULL);
 		_tmp4_ = _tmp3_;
-		g_debug ("main.vala:82: %s", _tmp4_);
+		g_debug ("main.vala:85: %s", _tmp4_);
 		_g_free0 (_tmp4_);
 		_g_free0 (_tmp2_);
 	}
@@ -247,7 +250,7 @@ gboolean onInputFromChannel (GIOChannel* source, GIOCondition condition) {
 	gint _tmp2_;
 	gint ok;
 	g_return_val_if_fail (source != NULL, FALSE);
-	g_debug ("main.vala:90: onInputFromChannel, condition = %d", (gint) condition);
+	g_debug ("main.vala:94: onInputFromChannel, condition = %d", (gint) condition);
 	if (condition == G_IO_HUP) {
 		_tmp0_ = TRUE;
 	} else {
@@ -255,7 +258,7 @@ gboolean onInputFromChannel (GIOChannel* source, GIOCondition condition) {
 	}
 	g_assert (_tmp0_);
 	if (condition == G_IO_HUP) {
-		g_debug ("main.vala:96: HUP, closing");
+		g_debug ("main.vala:100: HUP, closing");
 		g_main_loop_quit (loop);
 		result = FALSE;
 		return result;
@@ -265,25 +268,35 @@ gboolean onInputFromChannel (GIOChannel* source, GIOCondition condition) {
 	flags = _tmp1_;
 	ok = _tmp2_;
 	if (ok < 0) {
-		g_debug ("main.vala:105: error while checking for pending events...");
+		g_debug ("main.vala:109: error while checking for pending events...");
 	} else {
 		if (ok == 0) {
-			g_debug ("main.vala:109: D'oh, cmt speech readable, but no events pending...");
+			g_debug ("main.vala:113: D'oh, cmt speech readable, but no events pending...");
 		} else {
-			g_debug ("main.vala:113: connection reports pending events with flags 0x%0X", (guint) flags);
+			g_debug ("main.vala:117: connection reports pending events with flags 0x%0X", (guint) flags);
 			if ((flags & CMTSPEECH_EVENT_DL_DATA) == CMTSPEECH_EVENT_DL_DATA) {
 				handleDataEvent ();
 			} else {
 				if ((flags & CMTSPEECH_EVENT_CONTROL) == CMTSPEECH_EVENT_CONTROL) {
 					handleControlEvent ();
 				} else {
-					g_debug ("main.vala:125: event no DL_DATA nor CONTROL, ignoring");
+					g_debug ("main.vala:129: event no DL_DATA nor CONTROL, ignoring");
 				}
 			}
 		}
 	}
 	result = TRUE;
 	return result;
+}
+
+
+void SIGINT_handler (gint signum) {
+	g_main_loop_quit (loop);
+}
+
+
+static void _SIGINT_handler_sighandler_t (gint signal) {
+	SIGINT_handler (signal);
 }
 
 
@@ -307,25 +320,26 @@ void _vala_main (void) {
 	gint fd;
 	GMainLoop* _tmp2_ = NULL;
 	GIOChannel* _tmp3_ = NULL;
-	g_debug ("main.vala:134: initializing cmtspeed");
+	signal (SIGINT, _SIGINT_handler_sighandler_t);
+	g_debug ("main.vala:147: initializing cmtspeed");
 	cmtspeech_init ();
-	g_debug ("main.vala:137: setting up traces");
+	g_debug ("main.vala:150: setting up traces");
 	cmtspeech_trace_toggle (CMTSPEECH_TRACE_STATE_CHANGE, TRUE);
 	cmtspeech_trace_toggle (CMTSPEECH_TRACE_IO, TRUE);
 	cmtspeech_trace_toggle (CMTSPEECH_TRACE_DEBUG, TRUE);
-	g_debug ("main.vala:142: instanciating connection");
+	g_debug ("main.vala:155: instanciating connection");
 	_tmp0_ = cmtspeech_open ();
 	_cmtspeech_close0 (connection);
 	connection = _tmp0_;
 	if (connection == NULL) {
-		g_error ("main.vala:146: Can't instanciate connection");
+		g_error ("main.vala:159: Can't instanciate connection");
 	}
 	_tmp1_ = cmtspeech_descriptor (connection);
 	fd = _tmp1_;
 	if (fd == (-1)) {
-		g_error ("main.vala:152: File descriptor invalid");
+		g_error ("main.vala:166: File descriptor invalid");
 	}
-	g_debug ("main.vala:155: creating channel and mainloop");
+	g_debug ("main.vala:168: creating channel and mainloop");
 	_tmp2_ = g_main_loop_new (NULL, FALSE);
 	_g_main_loop_unref0 (loop);
 	loop = _tmp2_;
@@ -334,9 +348,15 @@ void _vala_main (void) {
 	channel = _tmp3_;
 	g_io_add_watch (channel, G_IO_IN | G_IO_HUP, _onInputFromChannel_gio_func, NULL);
 	g_timeout_add_seconds_full (G_PRIORITY_DEFAULT, (guint) 3, _onTimeout_gsource_func, NULL, NULL);
-	g_debug ("main.vala:163: --> loop");
+	g_debug ("main.vala:176: --> loop");
 	g_main_loop_run (loop);
-	g_debug ("main.vala:165: <-- loop");
+	g_debug ("main.vala:178: <-- loop");
+	_cmtspeech_close0 (connection);
+	connection = NULL;
+	_g_io_channel_unref0 (channel);
+	channel = NULL;
+	_g_main_loop_unref0 (loop);
+	loop = NULL;
 }
 
 
