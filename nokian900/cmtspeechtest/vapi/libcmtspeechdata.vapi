@@ -91,8 +91,9 @@ namespace CmtSpeech
 
     /* Structs */
 
-    [CCode (cname = "struct cmtspeech_buffer_s", destroy_function = "", cheader_filename = "cmtspeech.h")]
-    public struct FrameBuffer
+    [Compact]
+    [CCode (cname = "struct cmtspeech_buffer_s", free_function = "", cheader_filename = "cmtspeech.h")]
+    public class FrameBuffer
     {
         public BufferType type;        /**< buffer type (CMTSPEECH_BUFFER_TYPE_*) */
         public int count;              /**< octets of valid data (including header) */

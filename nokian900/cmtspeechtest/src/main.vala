@@ -34,8 +34,8 @@ public static void handleDataEvent()
 {
     debug( @"handleDataEvent during protocol state $(connection.protocol_state())" );
 
-    var dlbuf = CmtSpeech.FrameBuffer();
-    var ulbuf = CmtSpeech.FrameBuffer();
+    CmtSpeech.FrameBuffer dlbuf = null;
+    CmtSpeech.FrameBuffer ulbuf = null;
 
     var ok = connection.dl_buffer_acquire( out dlbuf );
     if ( ok == 0 )

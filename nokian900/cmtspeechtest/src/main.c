@@ -15,6 +15,7 @@
 #include <gio/gio.h>
 
 #define _g_free0(var) (var = (g_free (var), NULL))
+#define _0(var) ((var == NULL) ? NULL : (var = ( (var), NULL)))
 #define _cmtspeech_close0(var) ((var == NULL) ? NULL : (var = (cmtspeech_close (var), NULL)))
 #define _g_main_loop_unref0(var) ((var == NULL) ? NULL : (var = (g_main_loop_unref (var), NULL)))
 #define _g_io_channel_unref0(var) ((var == NULL) ? NULL : (var = (g_io_channel_unref (var), NULL)))
@@ -116,9 +117,9 @@ void handleDataEvent (void) {
 	const gchar* _tmp1_ = NULL;
 	gchar* _tmp2_ = NULL;
 	gchar* _tmp3_;
-	struct cmtspeech_buffer_s dlbuf = {0};
-	struct cmtspeech_buffer_s ulbuf = {0};
-	struct cmtspeech_buffer_s _tmp4_ = {0};
+	struct cmtspeech_buffer_s* dlbuf;
+	struct cmtspeech_buffer_s* ulbuf;
+	struct cmtspeech_buffer_s* _tmp4_ = NULL;
 	gint _tmp5_;
 	gint ok;
 	_tmp0_ = cmtspeech_protocol_state (connection);
@@ -127,34 +128,34 @@ void handleDataEvent (void) {
 	_tmp3_ = _tmp2_;
 	g_debug ("main.vala:35: %s", _tmp3_);
 	_g_free0 (_tmp3_);
-	memset (&dlbuf, 0, sizeof (struct cmtspeech_buffer_s));
-	memset (&ulbuf, 0, sizeof (struct cmtspeech_buffer_s));
+	dlbuf = NULL;
+	ulbuf = NULL;
 	_tmp5_ = cmtspeech_dl_buffer_acquire (connection, &_tmp4_);
-	 (&dlbuf);
+	_0 (dlbuf);
 	dlbuf = _tmp4_;
 	ok = _tmp5_;
 	if (ok == 0) {
 		gint _tmp6_;
-		g_debug ("main.vala:43: received DL packet w/ %u bytes", (guint) dlbuf.count);
+		g_debug ("main.vala:43: received DL packet w/ %u bytes", (guint) dlbuf->count);
 		_tmp6_ = cmtspeech_protocol_state (connection);
 		if (_tmp6_ == CMTSPEECH_STATE_ACTIVE_DLUL) {
-			struct cmtspeech_buffer_s _tmp7_ = {0};
+			struct cmtspeech_buffer_s* _tmp7_ = NULL;
 			gint _tmp8_;
 			g_debug ("main.vala:46: protocol state is ACTIVE_DLUL, uploading as well...");
 			_tmp8_ = cmtspeech_ul_buffer_acquire (connection, &_tmp7_);
-			 (&ulbuf);
+			_0 (ulbuf);
 			ulbuf = _tmp7_;
 			ok = _tmp8_;
-			if (ulbuf.pcount == dlbuf.pcount) {
-				g_debug ("main.vala:50: looping DL packet to UL with %u payload bytes", (guint) dlbuf.pcount);
-				memcpy (ulbuf.payload, dlbuf.payload, (gsize) dlbuf.pcount);
+			if (ulbuf->pcount == dlbuf->pcount) {
+				g_debug ("main.vala:50: looping DL packet to UL with %u payload bytes", (guint) dlbuf->pcount);
+				memcpy (ulbuf->payload, dlbuf->payload, (gsize) dlbuf->pcount);
 			}
-			cmtspeech_ul_buffer_release (connection, &ulbuf);
+			cmtspeech_ul_buffer_release (connection, ulbuf);
 		}
-		cmtspeech_dl_buffer_release (connection, &dlbuf);
+		cmtspeech_dl_buffer_release (connection, dlbuf);
 	}
-	 (&ulbuf);
-	 (&dlbuf);
+	_0 (ulbuf);
+	_0 (dlbuf);
 }
 
 
