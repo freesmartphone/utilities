@@ -8,14 +8,18 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <cmtspeech.h>
+#include <freesmartphone.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <gio/gio.h>
 
 #define _g_free0(var) (var = (g_free (var), NULL))
 #define _cmtspeech_close0(var) ((var == NULL) ? NULL : (var = (cmtspeech_close (var), NULL)))
 #define _g_main_loop_unref0(var) ((var == NULL) ? NULL : (var = (g_main_loop_unref (var), NULL)))
 #define _g_io_channel_unref0(var) ((var == NULL) ? NULL : (var = (g_io_channel_unref (var), NULL)))
+#define _g_object_unref0(var) ((var == NULL) ? NULL : (var = (g_object_unref (var), NULL)))
+#define _g_error_free0(var) ((var == NULL) ? NULL : (var = (g_error_free (var), NULL)))
 
 
 extern GMainLoop* loop;
@@ -24,7 +28,11 @@ extern GIOChannel* channel;
 GIOChannel* channel = NULL;
 extern cmtspeech_t* connection;
 cmtspeech_t* connection = NULL;
+extern FreeSmartphoneGSMCall* gsmcallproxy;
+FreeSmartphoneGSMCall* gsmcallproxy = NULL;
 
+void onCallStatusSignal (gint id, FreeSmartphoneGSMCallStatus status, GHashTable* properties);
+const gchar* free_smartphone_gsm_call_status_to_string (FreeSmartphoneGSMCallStatus self);
 void handleDataEvent (void);
 const gchar* cmtspeech_state_to_string (gint self);
 static const char* _cmtspeech_state_to_string (gint value);
@@ -37,7 +45,51 @@ void SIGINT_handler (gint signum);
 void _vala_main (void);
 static void _SIGINT_handler_sighandler_t (gint signal);
 static gboolean _onInputFromChannel_gio_func (GIOChannel* source, GIOCondition condition, gpointer self);
-static gboolean _onTimeout_gsource_func (gpointer self);
+static void _onCallStatusSignal_free_smartphone_gsm_call_call_status (FreeSmartphoneGSMCall* _sender, gint id, FreeSmartphoneGSMCallStatus status, GHashTable* properties, gpointer self);
+
+
+void onCallStatusSignal (gint id, FreeSmartphoneGSMCallStatus status, GHashTable* properties) {
+	gchar* _tmp0_ = NULL;
+	gchar* _tmp1_;
+	GEnumValue* _tmp2_;
+	gchar* _tmp3_ = NULL;
+	gchar* _tmp4_;
+	g_return_if_fail (properties != NULL);
+	_tmp0_ = g_strdup_printf ("%i", id);
+	_tmp1_ = _tmp0_;
+	_tmp2_ = g_enum_get_value (g_type_class_ref (FREE_SMARTPHONE_GSM_TYPE_CALL_STATUS), status);
+	_tmp3_ = g_strconcat ("onCallStatusSignal ", _tmp1_, " w/ status ", (_tmp2_ != NULL) ? _tmp2_->value_name : NULL, NULL);
+	_tmp4_ = _tmp3_;
+	g_debug ("main.vala:13: %s", _tmp4_);
+	_g_free0 (_tmp4_);
+	_g_free0 (_tmp1_);
+	switch (status) {
+		case FREE_SMARTPHONE_GSM_CALL_STATUS_OUTGOING:
+		case FREE_SMARTPHONE_GSM_CALL_STATUS_ACTIVE:
+		{
+			cmtspeech_state_change_call_status (connection, TRUE);
+			break;
+		}
+		case FREE_SMARTPHONE_GSM_CALL_STATUS_INCOMING:
+		case FREE_SMARTPHONE_GSM_CALL_STATUS_RELEASE:
+		{
+			cmtspeech_state_change_call_status (connection, FALSE);
+			break;
+		}
+		default:
+		{
+			GEnumValue* _tmp5_;
+			gchar* _tmp6_ = NULL;
+			gchar* _tmp7_;
+			_tmp5_ = g_enum_get_value (g_type_class_ref (FREE_SMARTPHONE_GSM_TYPE_CALL_STATUS), status);
+			_tmp6_ = g_strconcat ("Unhandled call status ", (_tmp5_ != NULL) ? _tmp5_->value_name : NULL, NULL);
+			_tmp7_ = _tmp6_;
+			g_debug ("main.vala:27: %s", _tmp7_);
+			_g_free0 (_tmp7_);
+			break;
+		}
+	}
+}
 
 
 static const char* _cmtspeech_state_to_string (gint value) {
@@ -73,7 +125,7 @@ void handleDataEvent (void) {
 	_tmp1_ = _cmtspeech_state_to_string (_tmp0_);
 	_tmp2_ = g_strconcat ("handleDataEvent during protocol state ", _tmp1_, NULL);
 	_tmp3_ = _tmp2_;
-	g_debug ("main.vala:12: %s", _tmp3_);
+	g_debug ("main.vala:35: %s", _tmp3_);
 	_g_free0 (_tmp3_);
 	memset (&dlbuf, 0, sizeof (struct cmtspeech_buffer_s));
 	memset (&ulbuf, 0, sizeof (struct cmtspeech_buffer_s));
@@ -83,18 +135,18 @@ void handleDataEvent (void) {
 	ok = _tmp5_;
 	if (ok == 0) {
 		gint _tmp6_;
-		g_debug ("main.vala:20: received DL packet w/ %u bytes", (guint) dlbuf.count);
+		g_debug ("main.vala:43: received DL packet w/ %u bytes", (guint) dlbuf.count);
 		_tmp6_ = cmtspeech_protocol_state (connection);
 		if (_tmp6_ == CMTSPEECH_STATE_ACTIVE_DLUL) {
 			struct cmtspeech_buffer_s _tmp7_ = {0};
 			gint _tmp8_;
-			g_debug ("main.vala:23: protocol state is ACTIVE_DLUL, uploading as well...");
+			g_debug ("main.vala:46: protocol state is ACTIVE_DLUL, uploading as well...");
 			_tmp8_ = cmtspeech_ul_buffer_acquire (connection, &_tmp7_);
 			 (&ulbuf);
 			ulbuf = _tmp7_;
 			ok = _tmp8_;
 			if (ulbuf.pcount == dlbuf.pcount) {
-				g_debug ("main.vala:27: looping DL packet to UL with %u payload bytes", (guint) dlbuf.pcount);
+				g_debug ("main.vala:50: looping DL packet to UL with %u payload bytes", (guint) dlbuf.pcount);
 				memcpy (ulbuf.payload, dlbuf.payload, (gsize) dlbuf.pcount);
 			}
 			cmtspeech_ul_buffer_release (connection, &ulbuf);
@@ -153,7 +205,7 @@ void handleControlEvent (void) {
 	_tmp1_ = _cmtspeech_state_to_string (_tmp0_);
 	_tmp2_ = g_strconcat ("handleControlEvent during protocol state ", _tmp1_, NULL);
 	_tmp3_ = _tmp2_;
-	g_debug ("main.vala:39: %s", _tmp3_);
+	g_debug ("main.vala:62: %s", _tmp3_);
 	_g_free0 (_tmp3_);
 	memset (&event, 0, sizeof (struct cmtspeech_event_s));
 	transition = 0;
@@ -162,7 +214,7 @@ void handleControlEvent (void) {
 	_tmp5_ = _tmp4_;
 	_tmp6_ = g_strconcat ("read event, type is ", _tmp5_, NULL);
 	_tmp7_ = _tmp6_;
-	g_debug ("main.vala:46: %s", _tmp7_);
+	g_debug ("main.vala:69: %s", _tmp7_);
 	_g_free0 (_tmp7_);
 	_g_free0 (_tmp5_);
 	_tmp8_ = cmtspeech_event_to_state_transition (connection, &event);
@@ -170,7 +222,7 @@ void handleControlEvent (void) {
 	switch (transition) {
 		case CMTSPEECH_TR_INVALID:
 		{
-			g_debug ("main.vala:52: ERROR: invalid state transition");
+			g_debug ("main.vala:75: ERROR: invalid state transition");
 			break;
 		}
 		case CMTSPEECH_TR_1_CONNECTED:
@@ -185,14 +237,14 @@ void handleControlEvent (void) {
 			_tmp9_ = _cmtspeech_transition_to_string (transition);
 			_tmp10_ = g_strconcat ("state transition ok, new state is ", _tmp9_, NULL);
 			_tmp11_ = _tmp10_;
-			g_debug ("main.vala:60: %s", _tmp11_);
+			g_debug ("main.vala:83: %s", _tmp11_);
 			_g_free0 (_tmp11_);
 			break;
 		}
 		case CMTSPEECH_TR_6_TIMING_UPDATE:
 		case CMTSPEECH_TR_7_TIMING_UPDATE:
 		{
-			g_debug ("main.vala:65: WARNING: modem UL timing update ignored");
+			g_debug ("main.vala:88: WARNING: modem UL timing update ignored");
 			break;
 		}
 		case CMTSPEECH_TR_10_RESET:
@@ -205,7 +257,7 @@ void handleControlEvent (void) {
 			_tmp12_ = _cmtspeech_transition_to_string (transition);
 			_tmp13_ = g_strconcat ("state transition ok, new state is ", _tmp12_, NULL);
 			_tmp14_ = _tmp13_;
-			g_debug ("main.vala:71: %s", _tmp14_);
+			g_debug ("main.vala:94: %s", _tmp14_);
 			_g_free0 (_tmp14_);
 			break;
 		}
@@ -233,7 +285,7 @@ gboolean onTimeout (void) {
 		_tmp2_ = _tmp1_;
 		_tmp3_ = g_strconcat ("change call state returned: ", _tmp2_, NULL);
 		_tmp4_ = _tmp3_;
-		g_debug ("main.vala:85: %s", _tmp4_);
+		g_debug ("main.vala:108: %s", _tmp4_);
 		_g_free0 (_tmp4_);
 		_g_free0 (_tmp2_);
 	}
@@ -250,7 +302,7 @@ gboolean onInputFromChannel (GIOChannel* source, GIOCondition condition) {
 	gint _tmp2_;
 	gint ok;
 	g_return_val_if_fail (source != NULL, FALSE);
-	g_debug ("main.vala:94: onInputFromChannel, condition = %d", (gint) condition);
+	g_debug ("main.vala:117: onInputFromChannel, condition = %d", (gint) condition);
 	if (condition == G_IO_HUP) {
 		_tmp0_ = TRUE;
 	} else {
@@ -258,7 +310,7 @@ gboolean onInputFromChannel (GIOChannel* source, GIOCondition condition) {
 	}
 	g_assert (_tmp0_);
 	if (condition == G_IO_HUP) {
-		g_debug ("main.vala:100: HUP, closing");
+		g_debug ("main.vala:123: HUP, closing");
 		g_main_loop_quit (loop);
 		result = FALSE;
 		return result;
@@ -268,19 +320,19 @@ gboolean onInputFromChannel (GIOChannel* source, GIOCondition condition) {
 	flags = _tmp1_;
 	ok = _tmp2_;
 	if (ok < 0) {
-		g_debug ("main.vala:109: error while checking for pending events...");
+		g_debug ("main.vala:132: error while checking for pending events...");
 	} else {
 		if (ok == 0) {
-			g_debug ("main.vala:113: D'oh, cmt speech readable, but no events pending...");
+			g_debug ("main.vala:136: D'oh, cmt speech readable, but no events pending...");
 		} else {
-			g_debug ("main.vala:117: connection reports pending events with flags 0x%0X", (guint) flags);
+			g_debug ("main.vala:140: connection reports pending events with flags 0x%0X", (guint) flags);
 			if ((flags & CMTSPEECH_EVENT_DL_DATA) == CMTSPEECH_EVENT_DL_DATA) {
 				handleDataEvent ();
 			} else {
 				if ((flags & CMTSPEECH_EVENT_CONTROL) == CMTSPEECH_EVENT_CONTROL) {
 					handleControlEvent ();
 				} else {
-					g_debug ("main.vala:129: event no DL_DATA nor CONTROL, ignoring");
+					g_debug ("main.vala:152: event no DL_DATA nor CONTROL, ignoring");
 				}
 			}
 		}
@@ -307,9 +359,15 @@ static gboolean _onInputFromChannel_gio_func (GIOChannel* source, GIOCondition c
 }
 
 
-static gboolean _onTimeout_gsource_func (gpointer self) {
-	gboolean result;
-	result = onTimeout ();
+static void _onCallStatusSignal_free_smartphone_gsm_call_call_status (FreeSmartphoneGSMCall* _sender, gint id, FreeSmartphoneGSMCallStatus status, GHashTable* properties, gpointer self) {
+	onCallStatusSignal (id, status, properties);
+}
+
+
+static const gchar* string_to_string (const gchar* self) {
+	const gchar* result = NULL;
+	g_return_val_if_fail (self != NULL, NULL);
+	result = self;
 	return result;
 }
 
@@ -320,26 +378,29 @@ void _vala_main (void) {
 	gint fd;
 	GMainLoop* _tmp2_ = NULL;
 	GIOChannel* _tmp3_ = NULL;
+	FreeSmartphoneGSMCall* _tmp4_ = NULL;
+	FreeSmartphoneGSMCall* _tmp5_;
+	GError * _inner_error_ = NULL;
 	signal (SIGINT, _SIGINT_handler_sighandler_t);
-	g_debug ("main.vala:147: initializing cmtspeed");
+	g_debug ("main.vala:170: initializing cmtspeed");
 	cmtspeech_init ();
-	g_debug ("main.vala:150: setting up traces");
+	g_debug ("main.vala:173: setting up traces");
 	cmtspeech_trace_toggle (CMTSPEECH_TRACE_STATE_CHANGE, TRUE);
 	cmtspeech_trace_toggle (CMTSPEECH_TRACE_IO, TRUE);
 	cmtspeech_trace_toggle (CMTSPEECH_TRACE_DEBUG, TRUE);
-	g_debug ("main.vala:155: instanciating connection");
+	g_debug ("main.vala:178: instanciating connection");
 	_tmp0_ = cmtspeech_open ();
 	_cmtspeech_close0 (connection);
 	connection = _tmp0_;
 	if (connection == NULL) {
-		g_error ("main.vala:159: Can't instanciate connection");
+		g_error ("main.vala:182: Can't instanciate connection");
 	}
 	_tmp1_ = cmtspeech_descriptor (connection);
 	fd = _tmp1_;
 	if (fd == (-1)) {
-		g_error ("main.vala:166: File descriptor invalid");
+		g_error ("main.vala:189: File descriptor invalid");
 	}
-	g_debug ("main.vala:168: creating channel and mainloop");
+	g_debug ("main.vala:191: creating channel and mainloop");
 	_tmp2_ = g_main_loop_new (NULL, FALSE);
 	_g_main_loop_unref0 (loop);
 	loop = _tmp2_;
@@ -347,10 +408,40 @@ void _vala_main (void) {
 	_g_io_channel_unref0 (channel);
 	channel = _tmp3_;
 	g_io_add_watch (channel, G_IO_IN | G_IO_HUP, _onInputFromChannel_gio_func, NULL);
-	g_timeout_add_seconds_full (G_PRIORITY_DEFAULT, (guint) 3, _onTimeout_gsource_func, NULL, NULL);
-	g_debug ("main.vala:176: --> loop");
+	g_debug ("main.vala:197: hooking on to fsogsmd");
+	_tmp4_ = g_initable_new (FREE_SMARTPHONE_GSM_TYPE_CALL_PROXY, NULL, &_inner_error_, "g-flags", G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START, "g-name", "org.freesmartphone.ogsmd", "g-bus-type", G_BUS_TYPE_SYSTEM, "g-object-path", "/org/freesmartphone/GSM/Device", "g-interface-name", "org.freesmartphone.GSM.Call", NULL);
+	_tmp5_ = (FreeSmartphoneGSMCall*) _tmp4_;
+	if (_inner_error_ != NULL) {
+		goto __catch0_g_error;
+	}
+	_g_object_unref0 (gsmcallproxy);
+	gsmcallproxy = _tmp5_;
+	g_signal_connect (gsmcallproxy, "call-status", (GCallback) _onCallStatusSignal_free_smartphone_gsm_call_call_status, NULL);
+	goto __finally0;
+	__catch0_g_error:
+	{
+		GError * e;
+		const gchar* _tmp6_ = NULL;
+		gchar* _tmp7_ = NULL;
+		gchar* _tmp8_;
+		e = _inner_error_;
+		_inner_error_ = NULL;
+		_tmp6_ = string_to_string (e->message);
+		_tmp7_ = g_strconcat ("Could not hook to fsogsmd: ", _tmp6_, NULL);
+		_tmp8_ = _tmp7_;
+		g_error ("main.vala:205: %s", _tmp8_);
+		_g_free0 (_tmp8_);
+		_g_error_free0 (e);
+	}
+	__finally0:
+	if (_inner_error_ != NULL) {
+		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
+		g_clear_error (&_inner_error_);
+		return;
+	}
+	g_debug ("main.vala:208: --> loop");
 	g_main_loop_run (loop);
-	g_debug ("main.vala:178: <-- loop");
+	g_debug ("main.vala:210: <-- loop");
 	_cmtspeech_close0 (connection);
 	connection = NULL;
 	_g_io_channel_unref0 (channel);

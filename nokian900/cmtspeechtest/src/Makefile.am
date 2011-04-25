@@ -7,6 +7,7 @@ VALAC_ARGS = \
 	--vapidir ../vapi \
 	--pkg posix \
 	--pkg libcmtspeechdata \
+	--pkg fso-glib-1.0 \
 	--save-temps
 
 if WANT_DEBUG
@@ -14,8 +15,8 @@ VALAC_ARGS += -D DEBUG
 endif
 
 INCLUDES = \
-	$(DBUS_CFLAGS) \
 	$(GLIB_CFLAGS) \
+	$(FSO_GLIB_CFLAGS) \
 	-include $(CONFIG_HEADER) \
 	$(NULL)
 
@@ -37,6 +38,7 @@ $(BUILT_SOURCES): $(cmtspeechtest_VALASOURCES)
 
 cmtspeechtest_LDADD = \
 	$(CMTSPEECHDATA_LIBS) \
+	$(FSO_GLIB_LIBS) \
 	$(GLIB_LIBS) \
 	$(NULL)
 

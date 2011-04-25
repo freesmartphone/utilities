@@ -5,6 +5,29 @@
 MainLoop loop;
 IOChannel channel;
 CmtSpeech.Connection connection;
+FreeSmartphone.GSM.Call gsmcallproxy;
+
+//===========================================================================
+public static void onCallStatusSignal( int id, FreeSmartphone.GSM.CallStatus status, GLib.HashTable<string,GLib.Variant> properties )
+{
+    debug( @"onCallStatusSignal $id w/ status $status" );
+    switch ( status )
+    {
+        case FreeSmartphone.GSM.CallStatus.OUTGOING:
+        case FreeSmartphone.GSM.CallStatus.ACTIVE:
+            connection.state_change_call_status( true );
+            break;
+
+        case FreeSmartphone.GSM.CallStatus.INCOMING:
+        case FreeSmartphone.GSM.CallStatus.RELEASE:
+            connection.state_change_call_status( false );
+            break;
+
+        default:
+            debug( @"Unhandled call status $status" );
+            break;
+    }
+}
 
 //===========================================================================
 public static void handleDataEvent()
@@ -171,7 +194,16 @@ public static void main()
     channel = new IOChannel.unix_new( fd );
     channel.add_watch( IOCondition.IN | IOCondition.HUP, onInputFromChannel );
 
-    Timeout.add_seconds( 3, onTimeout );
+    debug( "hooking on to fsogsmd" );
+    try
+    {
+        gsmcallproxy = Bus.get_proxy_sync<FreeSmartphone.GSM.Call>( BusType.SYSTEM, "org.freesmartphone.ogsmd", "/org/freesmartphone/GSM/Device", DBusProxyFlags.DO_NOT_AUTO_START );
+        gsmcallproxy.call_status.connect( onCallStatusSignal );
+    }
+    catch ( Error e )
+    {
+        error( @"Could not hook to fsogsmd: $(e.message)" );
+    }
 
     debug( "--> loop" );
     loop.run();
