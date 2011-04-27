@@ -163,7 +163,7 @@ public static void SIGINT_handler( int signum )
 }
 
 //===========================================================================
-public static void main()
+public static void main( string[] argv )
 {
     Posix.signal( Posix.SIGINT, SIGINT_handler );
 
@@ -203,6 +203,19 @@ public static void main()
     catch ( Error e )
     {
         error( @"Could not hook to fsogsmd: $(e.message)" );
+    }
+
+    if ( argv.length > 1 )
+    {
+        var delay = int.parse( argv[1] );
+        if ( delay > 0 )
+        {
+            debug( @"calling state ACTIVE in $delay seconds..." );
+            Timeout.add_seconds( delay, () => {
+                onCallStatusSignal( 1, FreeSmartphone.GSM.CallStatus.ACTIVE, new GLib.HashTable<string,GLib.Variant>( str_hash, str_equal ) );
+                return false;
+            } );
+        }
     }
 
     debug( "--> loop" );
