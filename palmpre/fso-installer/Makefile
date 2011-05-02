@@ -122,7 +122,9 @@ build/unpacked-doctor: downloads/$(WEBOS_DOCTOR_NAME)
 
 build/unpacked-doctor/resources/.unpacked: build/unpacked-doctor
 	@echo "Extracting webos doctor ..."
-	@(cd build/unpacked-doctor; jar -xf ../../downloads/$(WEBOS_DOCTOR_NAME))
+	@if [ -x /usr/bin/jar ] ; then export unjar="jar -xf" ; elif [ -x /usr/bin/unzip ] ; then export unjar="unzip" ; fi ; \
+	if [ "$$unjar" = "" ] ; then echo "Not found command for extract webos doctor / Install package default-jdk or unzip." ; false ; \
+	else (cd build/unpacked-doctor; $$unjar ../../downloads/$(WEBOS_DOCTOR_NAME) > /dev/null || true ) ; fi
 	@(touch build/unpacked-doctor/resources/.unpacked)
 
 build/unpacked-doctor/webos/.unpacked: build/unpacked-doctor/resources/.unpacked
@@ -265,13 +267,14 @@ lvm-resize: unmount unmount-fso lvm-setup
 erase-image: unmount-fso
 	@echo "Erasing old image. This may take some time ..."
 	novacom -w run file://sbin/mkfs.ext3 -- /dev/store/fso &> /dev/null || true
+	@sleep 20
 	@echo "Erasing done!"
 
 .PHONY: flash-image
 flash-image: erase-image mount-fso
 ifneq (${IMAGE},undefined)
-	@if [ "${IMAGE}" == "" ] ; then \
-		echo "downloads/${IMAGE} is missing / You have to specify an correct image file (.tar.gz)!" ; false ; \
+	@if [ ! -f ${IMAGE} ] ; then \
+		echo "${IMAGE} is missing / You have to specify an correct image file (.tar.gz)!" ; false ; \
 	fi
 
 	@echo "Starting to flash the given image file '$(IMAGE)' to the device ..."
@@ -286,8 +289,8 @@ endif
 .PHONY: flash-kernel
 flash-kernel: mount
 ifneq (${KERNEL},undefined)
-	@if [ "${KERNEL}" == "" ] ; then \
-		echo "downloads/${KERNEL} is missing / You have to specify an correct kernel image file (uImage)!" ; false ; \
+	@if [ ! -f ${KERNEL} ] ; then \
+		echo "${KERNEL} is missing / You have to specify an correct kernel image file (uImage)!" ; false ; \
 	fi
 
 	@echo "Starting to flash the given kernel file '$(KERNEL)' to the device ..."
