@@ -121,9 +121,9 @@ build/unpacked-doctor: downloads/$(WEBOS_DOCTOR_NAME)
 	@mkdir -p build/unpacked-doctor
 
 build/unpacked-doctor/resources/.unpacked: build/unpacked-doctor
-	@echo "Extracting webos doctor ..."
-	@if [ -x /usr/bin/jar ] ; then export unjar="jar -xf" ; elif [ -x /usr/bin/unzip ] ; then export unjar="unzip" ; fi ; \
-	if [ "$$unjar" = "" ] ; then echo "Not found command for extract webos doctor / Install package default-jdk or unzip." ; false ; \
+	@echo "Extract the webos doctor ..."
+	@if [ `which jar` ] ; then export unjar="jar -xf" ; elif [ `which unzip` ] ; then export unjar="unzip" ; fi ; \
+	if [ "$$unjar" = "" ] ; then echo "Not found any command to extract webos doctor. Please install the jar or unzip utility to proceed!" ; false ; \
 	else (cd build/unpacked-doctor; $$unjar ../../downloads/$(WEBOS_DOCTOR_NAME) > /dev/null || true ) ; fi
 	@(touch build/unpacked-doctor/resources/.unpacked)
 
@@ -175,7 +175,7 @@ memload: build/unpacked-doctor/webos/.unpacked
 	@sleep 10
 
 .PHONY: memboot 
-memboot: recover build/unpacked-doctor/webos/.unpacked
+memboot: build/unpacked-doctor/webos/.unpacked recover
 	@echo "Transfer nova installer to device and reboot your device with it ..."
 	@novacom -w boot mem:// < build/unpacked-doctor/webos/${NOVAINSTALLER} 2> /dev/null || true
 
