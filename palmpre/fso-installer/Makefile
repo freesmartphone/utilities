@@ -1,6 +1,7 @@
 #
 # Copyright (C) 2011 by Sylvain Paré <sylvain.pare@gmail.com>
 #                       Simon Busch <morphis@gravedo.de>
+#                       Lukas 'Slyon' Märdian <lukasmaerdian@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +37,6 @@ WEBOS_DOCTOR_NAME = webosdoctor*.jar
 ###############################################################################
 # !!! DO NOT MODIFY ANY OF THE FOLLOWING LINES !!!
 ###############################################################################
-
 DOWNLOADDIRECTORY = downloads
 SUPPORTEDDEVICES = pre preplus pre2
 ifeq ($(filter ${TARGET},${SUPPORTEDDEVICES}),)
@@ -66,7 +66,6 @@ NOVAINSTALLER = nova-installer-image-castle.uImage
 NOVA_IMAGE_NAME = nova-cust-image-castle.rootfs.tar.gz
 IMAGEFILENAME = full-palmpre.tar.gz
 KERNELFILENAME = uImage-palmpre.bin
-BOOTR ?= bootr-palmpre_0.3.tar.gz
 DOWNLOAD_BASE_URL = "${ORIGIN_URL}/palmpre"
 ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
 $(error CONFIG_WEBOS_MEDIA_TARGET_SIZE needs to be bigger than 00.5G)
@@ -82,7 +81,6 @@ NOVAINSTALLER = nova-installer-image-roadrunner.uImage
 NOVA_IMAGE_NAME = nova-cust-image-roadrunner.rootfs.tar.gz
 IMAGEFILENAME = full-palmpre2.tar.gz
 KERNELFILENAME = uImage-palmpre2.bin
-BOOTR ?= bootr-palmpre2_0.3.tar.gz
 DOWNLOAD_BASE_URL = ${ORIGIN_URL}/palmpre2
 ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
 $(error CONFIG_WEBOS_MEDIA_TARGET_SIZE needs to be bigger than 00.5G)
@@ -95,7 +93,12 @@ endif
 
 IMAGE ?= $(DOWNLOADDIRECTORY)/$(IMAGEFILENAME)
 KERNEL ?= $(DOWNLOADDIRECTORY)/$(KERNELFILENAME)
+BOOTR = bootr_0.4.tar.gz
 BOOTRURL = https://github.com/downloads/slyon/bootr/${BOOTR}
+# Base URL for downloading GNU patch
+PATCH_URL = http://ipkg.preware.org/feeds/webos-internals/armv7/
+PATCH_IPK = org.webosinternals.patch_2.5.9-4_armv7.ipk
+
 
 ###############################################################################
 # General
@@ -160,8 +163,13 @@ wget-bootr: downloads
 	@echo "Downloading Bootr for your device ..."
 	wget --no-check-certificate -N --directory-prefix=downloads/ $(BOOTRURL)
 
+PHONY: wget-patch
+wget-patch: downloads
+	@echo "Downloading GNU Patch for your device ..."
+	wget -N --directory-prefix=downloads/ ${PATCH_URL}/$(PATCH_IPK)
+
 .PHONY: wget-stuff
-wget-stuff: wget-kernel wget-image wget-bootr
+wget-stuff: wget-kernel wget-image wget-bootr wget-patch
 
 ###############################################################################
 # Device preparation
@@ -188,7 +196,7 @@ reboot:
 
 .PHONY: recover
 recover:
-	@echo "Rebooting your device in recovery mode..."
+	@echo "Rebooting your device in recovery mode ..."
 	@novacom -w run file://sbin/tellbootie recover 2> /dev/null || true
 	@sleep 5
 	@echo "Done!"
@@ -299,8 +307,16 @@ else
 	@echo "downloads/${KERNEL} is missing / You have to specify an correct kernel image file (uImage)!" 
 endif
 
+.PHONY: install-patch
+install-patch: wget-patch
+	@echo "Temporary installing GNU Patch to your device ..."
+	novaterm put file://$(shell basename $(PATCH_IPK)) < downloads/$(PATCH_IPK)
+	novacom -w run file://usr/bin/ipkg -- install /$(shell basename $(PATCH_IPK)) 2> /dev/null || true
+	@sleep 1
+	@echo "GNU Patch installed!"
+
 .PHONY: install-bootr
-install-bootr: unmount wget-bootr
+install-bootr: unmount wget-bootr install-patch
 	@echo "Installing Bootr to your device ..."
 	novacom -w run file://bin/mount -- /dev/mmcblk0p2 /boot
 	novaterm put file://boot/$(shell basename $(BOOTR)) < downloads/$(BOOTR)
@@ -360,4 +376,5 @@ install-extra: mount-fso
 		novacom -w run file://bin/tar -- xf /tmp/extra-files.tar -C /tmp/fso 2> /dev/null || true ; \
 		novacom -w run file://bin/rm -- -f /tmp/extra-file.tar 2> /dev/null || true ; \
 	fi
+
 
