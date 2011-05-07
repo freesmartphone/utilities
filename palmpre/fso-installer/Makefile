@@ -302,7 +302,7 @@ ifneq (${KERNEL},undefined)
 	fi
 
 	@echo "Starting to flash the given kernel file '$(KERNEL)' to the device ..."
-	novaterm put file://tmp/boot/uImage-palmpre.bin < $(KERNEL)
+	novaterm put file://tmp/boot/$(KERNELFILENAME) < $(KERNEL)
 else
 	@echo "downloads/${KERNEL} is missing / You have to specify an correct kernel image file (uImage)!" 
 endif
