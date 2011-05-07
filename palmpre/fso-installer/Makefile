@@ -323,6 +323,7 @@ install-bootr: unmount wget-bootr install-patch
 	novacom -w run file://bin/tar -- -xzf /boot/$(shell basename $(BOOTR)) -C /boot 2> /dev/null || true
 	novacom -w run file://bin/rm -- /boot/$(shell basename $(BOOTR)) 2> /dev/null || true
 	novacom -w run file://boot/bootr/bin/install.sh install
+	novacom -w run file://bin/umount -- /dev/mmcblk0p2
 	@echo "Bootr installed!"
 
 .PHONY: restore-media
