@@ -290,6 +290,7 @@ ifneq (${IMAGE},undefined)
 	novaterm put file://tmp/fso/$(shell basename $(IMAGE)) < $(IMAGE)
 	novacom -w run file://bin/tar -- -xzf /tmp/fso/$(shell basename $(IMAGE)) -C /tmp/fso 2> /dev/null || true
 	novacom -w run file://bin/rm -- /tmp/fso/$(shell basename $(IMAGE)) 2> /dev/null || true
+	echo "image flashed!"
 else
 	@echo "downloads/${IMAGE} is missing / You have to specify an correct image file (.tar.gz)!"
 endif
@@ -327,15 +328,17 @@ install-bootr: unmount wget-bootr install-patch
 	@echo "Bootr installed!"
 
 .PHONY: restore-media
-restore-media:
+restore-media: unmount
 	@echo "Restoring your data to /media/internal ..."
-	novacom -w run file://bin/mkdir -- -p /tmp/media
-	novacom -w run file://bin/mount -- /dev/mapper/store-media /tmp/media -o rw
+	@sleep 5 # it seems that in some case it will hang without this when you do a make install-all... to check
+	@novacom -w run file://bin/mkdir -- -p /tmp/media
+	@novacom -w run file://bin/mount -- /dev/mapper/store-media /tmp/media -o rw
 	@export id="`novacom -w run file://bin/cat -- /proc/nduid | cut -c 1-8`" ; \
-	novaterm put file://tmp/media/$(shell basename backup/$$id/media.tar.gz) < backup/$$id/media.tar.gz ; \
-	novacom -w run file://bin/tar -- -xzf /tmp/media/$(shell basename backup/$$id/media.tar.gz) -C /tmp/media ; \
-	novacom -w run file://bin/rm -- /tmp/media/$(shell basename backup/$$id/media.tar.gz) ; \
-	novacom -w run file://bin/umount -- /tmp/media ; \
+	novaterm put file://tmp/media/$(shell basename backup/$$id/media.tar.gz) < backup/$$id/media.tar.gz
+	@novacom -w run file://bin/tar -- -xzf /tmp/media/$(shell basename backup/$$id/media.tar.gz) -C /tmp/media 2> /dev/null || true
+	@novacom -w run file://bin/rm -- /tmp/media/$(shell basename backup/$$id/media.tar.gz)
+	@novacom -w run file://bin/umount -- /tmp/media
+	@echo "Restoring done!"
 
 .PHONY: install-all
 install-all: wget-stuff memboot backup lvm-resize restore-media flash-image flash-kernel install-bootr reboot
