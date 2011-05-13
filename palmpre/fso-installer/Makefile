@@ -290,7 +290,8 @@ ifneq (${IMAGE},undefined)
 	novaterm put file://tmp/fso/$(shell basename $(IMAGE)) < $(IMAGE)
 	novacom -w run file://bin/tar -- -xzf /tmp/fso/$(shell basename $(IMAGE)) -C /tmp/fso 2> /dev/null || true
 	novacom -w run file://bin/rm -- /tmp/fso/$(shell basename $(IMAGE)) 2> /dev/null || true
-	echo "image flashed!"
+	echo "==> Image was flashed successfully!"
+	@make TARGET=${TARGET} unmount-fso
 else
 	@echo "downloads/${IMAGE} is missing / You have to specify an correct image file (.tar.gz)!"
 endif
