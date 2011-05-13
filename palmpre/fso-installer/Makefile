@@ -27,6 +27,7 @@
 TARGET = unknown
 # Define the size you want to let on your media partition of WebOS: 00.5G < X < 07.5G (15.5G for a pre2)
 # It NEEDS to be formated as XX.XG
+# The remaining space will be used for SHR
 CONFIG_WEBOS_MEDIA_TARGET_SIZE = 05.5G
 
 # Base URL for downloading kernels and images
@@ -178,7 +179,7 @@ wget-stuff: wget-kernel wget-image wget-bootr wget-patch
 .PHONY: memload
 memload: build/unpacked-doctor/webos/.unpacked
 	@echo "Transfer nova installer to device and boot it ..."
-	@novaterm boot mem:// < build/unpacked-doctor/webos/${NOVAINSTALLER}
+	@novacom boot mem:// < build/unpacked-doctor/webos/${NOVAINSTALLER}
 	@echo "Wait for device to come back ..."
 	@sleep 10
 
@@ -284,12 +285,9 @@ ifneq (${IMAGE},undefined)
 	@if [ ! -f ${IMAGE} ] ; then \
 		echo "${IMAGE} is missing / You have to specify an correct image file (.tar.gz)!" ; false ; \
 	fi
-
 	@echo "Starting to flash the given image file '$(IMAGE)' to the device ..."
 	novacom -w run file://bin/rm -- -rf /tmp/fso/*
-	novaterm put file://tmp/fso/$(shell basename $(IMAGE)) < $(IMAGE)
-	novacom -w run file://bin/tar -- -xzf /tmp/fso/$(shell basename $(IMAGE)) -C /tmp/fso 2> /dev/null || true
-	novacom -w run file://bin/rm -- /tmp/fso/$(shell basename $(IMAGE)) 2> /dev/null || true
+	novacom -w run file://bin/tar --xz -C /tmp/fso -f - . < $(IMAGE) 2> /dev/null || true
 	echo "==> Image was flashed successfully!"
 	@make TARGET=${TARGET} unmount-fso
 else
@@ -304,7 +302,7 @@ ifneq (${KERNEL},undefined)
 	fi
 
 	@echo "Starting to flash the given kernel file '$(KERNEL)' to the device ..."
-	novaterm put file://tmp/boot/$(KERNELFILENAME) < $(KERNEL)
+	novacom put file://tmp/boot/$(KERNELFILENAME) < $(KERNEL)
 else
 	@echo "downloads/${KERNEL} is missing / You have to specify an correct kernel image file (uImage)!" 
 endif
@@ -312,7 +310,7 @@ endif
 .PHONY: install-patch
 install-patch: wget-patch
 	@echo "Temporary installing GNU Patch to your device ..."
-	novaterm put file://$(shell basename $(PATCH_IPK)) < downloads/$(PATCH_IPK)
+	novacom put file://$(shell basename $(PATCH_IPK)) < downloads/$(PATCH_IPK)
 	novacom -w run file://usr/bin/ipkg -- install /$(shell basename $(PATCH_IPK)) 2> /dev/null || true
 	@sleep 1
 	@echo "GNU Patch installed!"
@@ -321,9 +319,7 @@ install-patch: wget-patch
 install-bootr: unmount wget-bootr install-patch
 	@echo "Installing Bootr to your device ..."
 	novacom -w run file://bin/mount -- /dev/mmcblk0p2 /boot
-	novaterm put file://boot/$(shell basename $(BOOTR)) < downloads/$(BOOTR)
-	novacom -w run file://bin/tar -- -xzf /boot/$(shell basename $(BOOTR)) -C /boot 2> /dev/null || true
-	novacom -w run file://bin/rm -- /boot/$(shell basename $(BOOTR)) 2> /dev/null || true
+	novacom -w run file://bin/tar -- -xz -C /boot -f - . < downloads/$(BOOTR) 2> /dev/null || true
 	novacom -w run file://boot/bootr/bin/install.sh install
 	novacom -w run file://bin/umount -- /dev/mmcblk0p2
 	@echo "Bootr installed!"
@@ -335,10 +331,8 @@ restore-media: unmount
 	@novacom -w run file://bin/mkdir -- -p /tmp/media
 	@novacom -w run file://bin/mount -- /dev/mapper/store-media /tmp/media -o rw
 	@export id="`novacom -w run file://bin/cat -- /proc/nduid | cut -c 1-8`" ; \
-	novaterm put file://tmp/media/$(shell basename backup/$$id/media.tar.gz) < backup/$$id/media.tar.gz
-	@novacom -w run file://bin/tar -- -xzf /tmp/media/$(shell basename backup/$$id/media.tar.gz) -C /tmp/media 2> /dev/null || true
-	@novacom -w run file://bin/rm -- /tmp/media/$(shell basename backup/$$id/media.tar.gz)
-	@novacom -w run file://bin/umount -- /tmp/media
+	novacom -w run file://bin/tar -- -xz -C /tmp/media -f - . < backup/$$id/media.tar.gz; \
+	novacom -w run file://bin/umount -- /tmp/media
 	@echo "Restoring done!"
 
 .PHONY: install-all
@@ -347,15 +341,13 @@ install-all: wget-stuff memboot backup lvm-resize restore-media flash-image flas
 .PHONY: update-kernel
 update-kernel: mount
 	@echo "Updating your Kernel ..."
-	novaterm put file://tmp/boot/$(shell basename $(KERNEL)) < $(KERNEL)
+	novacom put file://tmp/boot/$(shell basename $(KERNEL)) < $(KERNEL)
 	@echo "Kernel updated!"
 
 .PHONY: update-rootfs
 update-rootfs: erase-image mount-fso
 	@echo "Updating your rootfs ..."
-	novaterm put file://tmp/fso/$(shell basename $(IMAGE)) < $(IMAGE)
-	novacom -w run file://bin/tar -- -xzf /tmp/fso/$(shell basename $(IMAGE)) -C /tmp/fso 2> /dev/null || true
-	novacom -w run file://bin/rm -- /tmp/fso/$(shell basename $(IMAGE))
+	novacom -w run file://bin/tar -- -xz -C /tmp/fso -f - . < $(IMAGE) > /dev/null || true
 	@echo "Root filesystem updated!"
 
 .PHONY: update-all
@@ -377,9 +369,7 @@ install-extra: mount-fso
 		echo "Installing extra files to device ..." ; \
 		rm -f build/extrafiles.tar ; \
 		( cd extra ; tar cf ../build/extra-files.tar * ); \
-		novaterm put file://tmp/extra-files.tar < build/extra-files.tar 2> /dev/null || true; \
-		novacom -w run file://bin/tar -- xf /tmp/extra-files.tar -C /tmp/fso 2> /dev/null || true ; \
-		novacom -w run file://bin/rm -- -f /tmp/extra-file.tar 2> /dev/null || true ; \
+		novacom -w run file://bin/tar --x -C /tmp/fso -f - . < build/extra-files.tar 2> /dev/null || true; \
 	fi
 
 
