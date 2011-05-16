@@ -369,7 +369,7 @@ install-extra: mount-fso
 		echo "Installing extra files to device ..." ; \
 		rm -f build/extrafiles.tar ; \
 		( cd extra ; tar cf ../build/extra-files.tar * ); \
-		novacom -w run file://bin/tar --x -C /tmp/fso -f - . < build/extra-files.tar 2> /dev/null || true; \
+		novacom -w run file://bin/tar -- x -C /tmp/fso -f - . < build/extra-files.tar 2> /dev/null || true; \
 	fi
 
 
