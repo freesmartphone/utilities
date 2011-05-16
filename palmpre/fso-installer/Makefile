@@ -287,7 +287,7 @@ ifneq (${IMAGE},undefined)
 	fi
 	@echo "Starting to flash the given image file '$(IMAGE)' to the device ..."
 	novacom -w run file://bin/rm -- -rf /tmp/fso/*
-	novacom -w run file://bin/tar --xz -C /tmp/fso -f - . < $(IMAGE) 2> /dev/null || true
+	novacom -w run file://bin/tar -- -xz -C /tmp/fso -f - . < $(IMAGE) 2> /dev/null || true
 	echo "==> Image was flashed successfully!"
 	@make TARGET=${TARGET} unmount-fso
 else
