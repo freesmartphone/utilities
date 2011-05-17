@@ -303,6 +303,7 @@ ifneq (${KERNEL},undefined)
 
 	@echo "Starting to flash the given kernel file '$(KERNEL)' to the device ..."
 	novacom put file://tmp/boot/$(KERNELFILENAME) < $(KERNEL)
+	@make TARGET=${TARGET} unmount
 else
 	@echo "downloads/${KERNEL} is missing / You have to specify an correct kernel image file (uImage)!" 
 endif
