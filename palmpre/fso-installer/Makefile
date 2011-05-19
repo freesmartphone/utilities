@@ -48,34 +48,30 @@ ifneq ($(shell echo ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}|wc -c),6)
 $(error Wrong CONFIG_WEBOS_MEDIA_TARGET_SIZE format!!)
 endif
 
-ifeq (${TARGET},preplus)
 ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
 $(error CONFIG_WEBOS_MEDIA_TARGET_SIZE needs to be bigger than 00.5G)
-endif
-ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '>' '15.5G'),1)
-$(error $(shell echo |awk '{print 8.0 - ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}}')G is left to FSO/SHR, It is too small .\
- You need to decrease CONFIG_WEBOS_MEDIA_TARGET_SIZE)
-endif
-# We just have to verify the size of the media partition for the preplus device
-# different than for the pre device. All other things are the same so we switch
-# over here to TARGET = pre
-TARGET = pre
 endif
 
 ifeq (${TARGET},pre)
-NOVAINSTALLER = nova-installer-image-castle.uImage
-NOVA_IMAGE_NAME = nova-cust-image-castle.rootfs.tar.gz
-IMAGEFILENAME = full-palmpre.tar.gz
-KERNELFILENAME = uImage-palmpre.bin
-DOWNLOAD_BASE_URL = "${ORIGIN_URL}/palmpre"
-ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
-$(error CONFIG_WEBOS_MEDIA_TARGET_SIZE needs to be bigger than 00.5G)
-endif
 ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '>' '07.5G'),1)
 $(error $(shell echo |awk '{print 8.0 - ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}}')G is left to FSO/SHR, It is too small .\
  You need to decrease CONFIG_WEBOS_MEDIA_TARGET_SIZE)
 endif
 endif
+
+ifeq (${TARGET},preplus)
+ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '>' '15.5G'),1)
+$(error $(shell echo |awk '{print 8.0 - ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}}')G is left to FSO/SHR, It is too small .\
+ You need to decrease CONFIG_WEBOS_MEDIA_TARGET_SIZE)
+endif
+endif
+
+#common stuff to both pre and preplus devices redefined if it is a pre2
+NOVAINSTALLER = nova-installer-image-castle.uImage
+NOVA_IMAGE_NAME = nova-cust-image-castle.rootfs.tar.gz
+IMAGEFILENAME = full-palmpre.tar.gz
+KERNELFILENAME = uImage-palmpre.bin
+DOWNLOAD_BASE_URL = "${ORIGIN_URL}/palmpre"
 
 ifeq (${TARGET},pre2)
 NOVAINSTALLER = nova-installer-image-roadrunner.uImage
@@ -83,9 +79,6 @@ NOVA_IMAGE_NAME = nova-cust-image-roadrunner.rootfs.tar.gz
 IMAGEFILENAME = full-palmpre2.tar.gz
 KERNELFILENAME = uImage-palmpre2.bin
 DOWNLOAD_BASE_URL = ${ORIGIN_URL}/palmpre2
-ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
-$(error CONFIG_WEBOS_MEDIA_TARGET_SIZE needs to be bigger than 00.5G)
-endif
 ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '>' '15.5G'),1)
 $(error $(shell echo |awk '{print 16.0 - ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}}')G is left to FSO/SHR, It is too small .\
  You need to decrease CONFIG_WEBOS_MEDIA_TARGET_SIZE)
