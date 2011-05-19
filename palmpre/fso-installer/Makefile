@@ -187,6 +187,8 @@ memload: build/unpacked-doctor/webos/.unpacked
 memboot: build/unpacked-doctor/webos/.unpacked recover
 	@echo "Transfer nova installer to device and reboot your device with it ..."
 	@novacom -w boot mem:// < build/unpacked-doctor/webos/${NOVAINSTALLER} 2> /dev/null || true
+	@echo "Wait for device to come back ..."
+	@sleep 10
 
 .PHONY: reboot
 reboot:
@@ -302,7 +304,7 @@ ifneq (${KERNEL},undefined)
 	fi
 
 	@echo "Starting to flash the given kernel file '$(KERNEL)' to the device ..."
-	novacom put file://tmp/boot/$(KERNELFILENAME) < $(KERNEL)
+	@novacom put file://tmp/boot/$(KERNELFILENAME) < $(KERNEL)
 	@make TARGET=${TARGET} unmount
 else
 	@echo "downloads/${KERNEL} is missing / You have to specify an correct kernel image file (uImage)!" 
@@ -342,18 +344,49 @@ install-all: wget-stuff memboot backup lvm-resize restore-media flash-image flas
 .PHONY: update-kernel
 update-kernel: mount
 	@echo "Updating your Kernel ..."
-	novacom put file://tmp/boot/$(shell basename $(KERNEL)) < $(KERNEL)
+	@novacom put file://tmp/boot/$(KERNELFILENAME) < $(KERNEL)
 	@echo "Kernel updated!"
 
 .PHONY: update-rootfs
 update-rootfs: erase-image mount-fso
 	@echo "Updating your rootfs ..."
-	novacom -w run file://bin/tar -- -xz -C /tmp/fso -f - . < $(IMAGE) > /dev/null || true
+	@novacom -w run file://bin/tar -- -xz -C /tmp/fso -f - . < $(IMAGE) > /dev/null || true
 	@echo "Root filesystem updated!"
 
 .PHONY: update-all
 update-all: wget-image wget-kernel memboot update-kernel update-rootfs reboot
 	@echo FSO/SHR up to date!
+
+.PHONY: neuralyze-me
+neuralyze-me: memboot
+	@echo "This will restore your device like you had never seen us ..."
+	@novacom -w run file://bin/mkdir -- -p /tmp/media
+	@novacom -w run file://bin/mount -- /dev/mapper/store-media /tmp/media -o rw
+	@export id="`novacom -w run file://bin/cat -- /proc/nduid | cut -c 1-8`" ; \
+	mkdir -p backup/$$id ; \
+	echo " Creating backup/$$id/media.tar.gz" ; \
+	( novacom -w run file://bin/tar -- -C /tmp/media/ --totals -cf - . ) | \
+	  gzip -c > backup/$$id/media.tar.gz ; \
+	echo "Backup Done!"
+	@novacom -w run file://bin/umount -- /tmp/media 2> /dev/null || true
+	@echo "lvm layout rearrangement"
+	@make --no-print-directory lvm-setup
+	@novacom -w run file://usr/sbin/lvm.static -- lvremove -f /dev/mapper/store-media 2> /dev/null || true
+	@novacom -w run file://usr/sbin/lvm.static -- lvremove -f /dev/mapper/store-fso 2> /dev/null || true
+	@novacom -w run file://usr/sbin/lvm.static -- lvcreate -l 100%FREE -n media store 2> /dev/null || true
+	@novacom -w run file://usr/sbin/mkdosfs -- -F 32 /dev/mapper/store-media 2> /dev/null || true
+	@echo "lvm layout rearranged!"
+	@make --no-print-directory restore-media
+	@novacom -w run file://bin/mount -- /dev/mmcblk0p2 /boot
+	@novacom -w run file://bin/rm -- -rf /boot/$(KERNELFILENAME)
+	@echo "Kernel removed!"
+	@novacom -w run file://boot/bootr/bin/install.sh uninstall
+	@novacom -w run file://bin/mount -- -o remount,rw /boot
+	@novacom -w run file://bin/rm -- -rf /boot/bootr/
+	@echo "Bootr removed!"
+	@novacom -w run file://bin/umount -- /dev/mmcblk0p2
+	@make --no-print-directory reboot
+
 
 ###############################################################################
 # Installing additional files
