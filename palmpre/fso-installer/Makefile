@@ -249,6 +249,8 @@ unmount:
 	  echo " Unmounting /tmp/$$f" ; \
 	  ( novacom -w run file://bin/umount -- /tmp/$$f 2> /dev/null || true ) ; \
 	done
+	@echo " Unmounting /dev/mmcblk0p2"
+	@novacom -w run file://bin/umount -- /dev/mmcblk0p2 2> /dev/null || true
 
 .PHONY: unmount-fso
 unmount-fso:
@@ -261,14 +263,14 @@ mount-fso: lvm-setup unmount-fso
 	@novacom -w run file://bin/mkdir -- -p /tmp/fso
 	@novacom -w run file://bin/mount -- /dev/mapper/store-fso /tmp/fso -o rw
 
-
 .PHONY: lvm-resize
 lvm-resize: unmount unmount-fso lvm-setup
 	@echo "Now we are resizing lvm partition to get some space for FSO/SHR ..."
-	@novacom -w run file://usr/sbin/lvm.static -- lvresize -f -L $(CONFIG_WEBOS_MEDIA_TARGET_SIZE) /dev/mapper/store-media 2> /dev/null || true
-	@novacom -w run file://usr/sbin/mkdosfs -- -F 32 /dev/mapper/store-media 2> /dev/null || true
-	@novacom -w run file://usr/sbin/lvm.static -- lvcreate -l 100%FREE -n fso store 2> /dev/null || true
-	@novacom -w run file://sbin/mkfs.ext3 /dev/store/fso 2> /dev/null || true
+	@novacom -w run file://usr/sbin/lvm.static -- lvresize -f -L $(CONFIG_WEBOS_MEDIA_TARGET_SIZE) /dev/mapper/store-media
+	@novacom -w run file://usr/sbin/mkdosfs -- -F 32 /dev/mapper/store-media
+	@novacom -w run file://usr/sbin/lvm.static -- lvcreate -l 100%FREE -n fso store
+	@novacom -w run file://sbin/mkfs.ext3 /dev/store/fso
+	@echo "Resizing lvm partition done!"
 
 ###############################################################################
 # Image flashing + erasing
@@ -277,8 +279,7 @@ lvm-resize: unmount unmount-fso lvm-setup
 .PHONY: erase-image
 erase-image: unmount-fso
 	@echo "Erasing old image. This may take some time ..."
-	novacom -w run file://sbin/mkfs.ext3 -- /dev/store/fso &> /dev/null || true
-	@sleep 20
+	@novacom -w run file://sbin/mkfs.ext3 /dev/store/fso
 	@echo "Erasing done!"
 
 .PHONY: flash-image
@@ -288,10 +289,10 @@ ifneq (${IMAGE},undefined)
 		echo "${IMAGE} is missing / You have to specify an correct image file (.tar.gz)!" ; false ; \
 	fi
 	@echo "Starting to flash the given image file '$(IMAGE)' to the device ..."
-	novacom -w run file://bin/rm -- -rf /tmp/fso/*
-	novacom -w run file://bin/tar -- -xz -C /tmp/fso -f - . < $(IMAGE) 2> /dev/null || true
-	echo "==> Image was flashed successfully!"
-	@make TARGET=${TARGET} unmount-fso
+	@novacom -w run file://bin/rm -- -rf /tmp/fso/*
+	@novacom -w run file://bin/tar -- -xz -C /tmp/fso -f - < $(IMAGE)
+	@make --no-print-directory TARGET=${TARGET} unmount-fso
+	@echo "Image was flashed successfully!"
 else
 	@echo "downloads/${IMAGE} is missing / You have to specify an correct image file (.tar.gz)!"
 endif
@@ -305,7 +306,7 @@ ifneq (${KERNEL},undefined)
 
 	@echo "Starting to flash the given kernel file '$(KERNEL)' to the device ..."
 	@novacom put file://tmp/boot/$(KERNELFILENAME) < $(KERNEL)
-	@make TARGET=${TARGET} unmount
+	@make --no-print-directory TARGET=${TARGET} unmount
 else
 	@echo "downloads/${KERNEL} is missing / You have to specify an correct kernel image file (uImage)!" 
 endif
@@ -313,33 +314,52 @@ endif
 .PHONY: install-patch
 install-patch: wget-patch
 	@echo "Temporary installing GNU Patch to your device ..."
-	novacom put file://$(shell basename $(PATCH_IPK)) < downloads/$(PATCH_IPK)
-	novacom -w run file://usr/bin/ipkg -- install /$(shell basename $(PATCH_IPK)) 2> /dev/null || true
+	@novacom put file://$(shell basename $(PATCH_IPK)) < downloads/$(PATCH_IPK)
+	@novacom -w run file://usr/bin/ipkg -- install /$(shell basename $(PATCH_IPK)) 2> /dev/null || true
 	@sleep 1
 	@echo "GNU Patch installed!"
 
 .PHONY: install-bootr
 install-bootr: unmount wget-bootr install-patch
 	@echo "Installing Bootr to your device ..."
-	novacom -w run file://bin/mount -- /dev/mmcblk0p2 /boot
-	novacom -w run file://bin/tar -- -xz -C /boot -f - . < downloads/$(BOOTR) 2> /dev/null || true
-	novacom -w run file://boot/bootr/bin/install.sh install
-	novacom -w run file://bin/umount -- /dev/mmcblk0p2
+	@novacom -w run file://bin/mount -- /dev/mmcblk0p2 /boot
+	@novacom -w run file://bin/tar -- -xz -C /boot -f - < downloads/$(BOOTR)
+	@novacom -w run file://boot/bootr/bin/install.sh install
+	@novacom -w run file://bin/umount -- /dev/mmcblk0p2
 	@echo "Bootr installed!"
 
 .PHONY: restore-media
-restore-media: unmount
+restore-media:
 	@echo "Restoring your data to /media/internal ..."
-	@sleep 5 # it seems that in some case it will hang without this when you do a make install-all... to check
 	@novacom -w run file://bin/mkdir -- -p /tmp/media
 	@novacom -w run file://bin/mount -- /dev/mapper/store-media /tmp/media -o rw
 	@export id="`novacom -w run file://bin/cat -- /proc/nduid | cut -c 1-8`" ; \
-	novacom -w run file://bin/tar -- -xz -C /tmp/media -f - . < backup/$$id/media.tar.gz; \
+	novacom -w run file://bin/tar -- -xz -C /tmp/media -f - < backup/$$id/media.tar.gz; \
 	novacom -w run file://bin/umount -- /tmp/media
 	@echo "Restoring done!"
 
 .PHONY: install-all
-install-all: wget-stuff memboot backup lvm-resize restore-media flash-image flash-kernel install-bootr reboot
+install-all:
+	@echo "==> The installation will begin ..."
+	@echo "==> Step 1/9 : downloading stuff, please wait ..."
+	@make --no-print-directory wget-stuff
+	@echo "==> Step 2/9 : rebooting your device, please wait ..."
+	@make --no-print-directory memboot
+	@echo "==> Step 3/9 : backuping your device, please wait ..."
+	@make --no-print-directory backup
+	@echo "==> Step 4/9 : partition layout, please wait ..."
+	@make --no-print-directory lvm-resize
+	@echo "==> Step 5/9 : restoring your data, please wait ..."
+	@make --no-print-directory restore-media
+	@echo "==> Step 6/9 : flashing the image, please wait ..."
+	@make --no-print-directory flash-image
+	@echo "==> Step 7/9 : flashing the kernel, please wait ..."
+	@make --no-print-directory flash-kernel
+	@echo "==> Step 8/9 : installing booting stuff, please wait ..."
+	@make --no-print-directory install-bootr
+	@echo "==> Step 9/9 : rebooting ..."
+	@make --no-print-directory reboot
+	@echo "==> Installation complete! Congratulations!"
 
 .PHONY: update-kernel
 update-kernel: mount
@@ -350,7 +370,7 @@ update-kernel: mount
 .PHONY: update-rootfs
 update-rootfs: erase-image mount-fso
 	@echo "Updating your rootfs ..."
-	@novacom -w run file://bin/tar -- -xz -C /tmp/fso -f - . < $(IMAGE) > /dev/null || true
+	@novacom -w run file://bin/tar -- -xz -C /tmp/fso -f - < $(IMAGE)
 	@echo "Root filesystem updated!"
 
 .PHONY: update-all
@@ -368,13 +388,13 @@ neuralyze-me: memboot
 	( novacom -w run file://bin/tar -- -C /tmp/media/ --totals -cf - . ) | \
 	  gzip -c > backup/$$id/media.tar.gz ; \
 	echo "Backup Done!"
-	@novacom -w run file://bin/umount -- /tmp/media 2> /dev/null || true
+	@novacom -w run file://bin/umount -- /tmp/media
 	@echo "lvm layout rearrangement"
 	@make --no-print-directory lvm-setup
-	@novacom -w run file://usr/sbin/lvm.static -- lvremove -f /dev/mapper/store-media 2> /dev/null || true
-	@novacom -w run file://usr/sbin/lvm.static -- lvremove -f /dev/mapper/store-fso 2> /dev/null || true
-	@novacom -w run file://usr/sbin/lvm.static -- lvcreate -l 100%FREE -n media store 2> /dev/null || true
-	@novacom -w run file://usr/sbin/mkdosfs -- -F 32 /dev/mapper/store-media 2> /dev/null || true
+	@novacom -w run file://usr/sbin/lvm.static -- lvremove -f /dev/mapper/store-media
+	@novacom -w run file://usr/sbin/lvm.static -- lvremove -f /dev/mapper/store-fso
+	@novacom -w run file://usr/sbin/lvm.static -- lvcreate -l 100%FREE -n media store
+	@novacom -w run file://usr/sbin/mkdosfs -- -F 32 /dev/mapper/store-media
 	@echo "lvm layout rearranged!"
 	@make --no-print-directory restore-media
 	@novacom -w run file://bin/mount -- /dev/mmcblk0p2 /boot
@@ -403,7 +423,7 @@ install-extra: mount-fso
 		echo "Installing extra files to device ..." ; \
 		rm -f build/extrafiles.tar ; \
 		( cd extra ; tar cf ../build/extra-files.tar * ); \
-		novacom -w run file://bin/tar -- x -C /tmp/fso -f - . < build/extra-files.tar 2> /dev/null || true; \
+		novacom -w run file://bin/tar -- x -C /tmp/fso -f - < build/extra-files.tar 2> /dev/null || true; \
 	fi
 
 
