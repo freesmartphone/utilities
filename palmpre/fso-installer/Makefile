@@ -48,7 +48,29 @@ ifneq ($(shell echo ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}|wc -c),6)
 $(error Wrong CONFIG_WEBOS_MEDIA_TARGET_SIZE format!!)
 endif
 
+ifeq (${TARGET},pre)
+NOVAINSTALLER = nova-installer-image-castle.uImage
+NOVA_IMAGE_NAME = nova-cust-image-castle.rootfs.tar.gz
+IMAGEFILENAME = full-palmpre.tar.gz
+KERNELFILENAME = uImage-palmpre.bin
+ORIGINALKERNELFILENAME = uImage-2.6.24-palm-joplin-3430
+DOWNLOAD_BASE_URL = "${ORIGIN_URL}/palmpre"
+ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
+$(error CONFIG_WEBOS_MEDIA_TARGET_SIZE needs to be bigger than 00.5G)
+endif
+ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '>' '07.5G'),1)
+$(error $(shell echo |awk '{print 8.0 - ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}}')G is left to FSO/SHR, It is too small .\
+ You need to decrease CONFIG_WEBOS_MEDIA_TARGET_SIZE)
+endif
+endif
+
 ifeq (${TARGET},preplus)
+NOVAINSTALLER = nova-installer-image-castle.uImage
+NOVA_IMAGE_NAME = nova-cust-image-castle.rootfs.tar.gz
+IMAGEFILENAME = full-palmpre.tar.gz
+KERNELFILENAME = uImage-palmpre.bin
+ORIGINALKERNELFILENAME = uImage-2.6.24-palm-joplin-3430
+DOWNLOAD_BASE_URL = "${ORIGIN_URL}/palmpre"
 ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
 $(error CONFIG_WEBOS_MEDIA_TARGET_SIZE needs to be bigger than 00.5G)
 endif
@@ -62,26 +84,12 @@ endif
 TARGET = pre
 endif
 
-ifeq (${TARGET},pre)
-NOVAINSTALLER = nova-installer-image-castle.uImage
-NOVA_IMAGE_NAME = nova-cust-image-castle.rootfs.tar.gz
-IMAGEFILENAME = full-palmpre.tar.gz
-KERNELFILENAME = uImage-palmpre.bin
-DOWNLOAD_BASE_URL = "${ORIGIN_URL}/palmpre"
-ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
-$(error CONFIG_WEBOS_MEDIA_TARGET_SIZE needs to be bigger than 00.5G)
-endif
-ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '>' '07.5G'),1)
-$(error $(shell echo |awk '{print 8.0 - ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}}')G is left to FSO/SHR, It is too small .\
- You need to decrease CONFIG_WEBOS_MEDIA_TARGET_SIZE)
-endif
-endif
-
 ifeq (${TARGET},pre2)
 NOVAINSTALLER = nova-installer-image-roadrunner.uImage
 NOVA_IMAGE_NAME = nova-cust-image-roadrunner.rootfs.tar.gz
 IMAGEFILENAME = full-palmpre2.tar.gz
 KERNELFILENAME = uImage-palmpre2.bin
+ORIGINALKERNELFILENAME = uImage-2.6.24-palm-joplin-3430
 DOWNLOAD_BASE_URL = ${ORIGIN_URL}/palmpre2
 ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '<' '00.5G'),1)
 $(error CONFIG_WEBOS_MEDIA_TARGET_SIZE needs to be bigger than 00.5G)
@@ -379,31 +387,25 @@ update-all: wget-image wget-kernel memboot update-kernel update-rootfs reboot
 
 .PHONY: neuralyze-me
 neuralyze-me: memboot
-	@echo "This will restore your device like you had never seen us ..."
-	@novacom -w run file://bin/mkdir -- -p /tmp/media
-	@novacom -w run file://bin/mount -- /dev/mapper/store-media /tmp/media -o rw
-	@export id="`novacom -w run file://bin/cat -- /proc/nduid | cut -c 1-8`" ; \
-	mkdir -p backup/$$id ; \
-	echo " Creating backup/$$id/media.tar.gz" ; \
-	( novacom -w run file://bin/tar -- -C /tmp/media/ --totals -cf - . ) | \
-	  gzip -c > backup/$$id/media.tar.gz ; \
-	echo "Backup Done!"
-	@novacom -w run file://bin/umount -- /tmp/media
+	@echo "This will restore your device like you had never seen us - Quickly..."
 	@echo "lvm layout rearrangement"
 	@make --no-print-directory lvm-setup
-	@novacom -w run file://usr/sbin/lvm.static -- lvremove -f /dev/mapper/store-media
 	@novacom -w run file://usr/sbin/lvm.static -- lvremove -f /dev/mapper/store-fso
-	@novacom -w run file://usr/sbin/lvm.static -- lvcreate -l 100%FREE -n media store
-	@novacom -w run file://usr/sbin/mkdosfs -- -F 32 /dev/mapper/store-media
+	@novacom -w run file://usr/sbin/lvm.static -- lvresize -l +100%FREE -n /dev/mapper/store-media
 	@echo "lvm layout rearranged!"
-	@make --no-print-directory restore-media
 	@novacom -w run file://bin/mount -- /dev/mmcblk0p2 /boot
 	@novacom -w run file://bin/rm -- -rf /boot/$(KERNELFILENAME)
 	@echo "Kernel removed!"
 	@novacom -w run file://boot/bootr/bin/install.sh uninstall
 	@novacom -w run file://bin/mount -- -o remount,rw /boot
 	@novacom -w run file://bin/rm -- -rf /boot/bootr/
-	@echo "Bootr removed!"
+	@echo "Bootr directory removed!"
+	@novacom -w run file://bin/mv -- /boot/sbin/init.webos.bootr /boot/sbin/init
+	@echo "Original init restored!"
+	@novacom -w run file://bin/rm -- /boot/sbin/*.bootr
+	@echo "Extra init files removed!"
+	@novacom -w run file://bin/ln -- -fs $(ORIGINALKERNELFILENAME) boot/uImage
+	@echo "Original kernel link restored!"
 	@novacom -w run file://bin/umount -- /dev/mmcblk0p2
 	@make --no-print-directory reboot
 
