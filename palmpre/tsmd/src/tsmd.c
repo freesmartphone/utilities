@@ -43,6 +43,9 @@ unsigned int need_reopen_touchscreen = 0;
 char network_addr[BUF_SIZE] = "\0";
 char device_node[BUF_SIZE] = "\0";
 
+#define MAX_X   319
+#define MAX_Y   527
+
 static int open_network_socket(char *address, int port)
 {
     int socket_fd;
@@ -216,6 +219,12 @@ static void read_and_send(int source_fd, int dest_fd)
             die("ts_read");
         }
         else if (ret == 0)
+        {
+            continue;
+        }
+
+        // ignore sample if it is out of screen (we ignore the gesture area here)
+        if (samp.x > MAX_X || samp.y > MAX_Y)
         {
             continue;
         }
