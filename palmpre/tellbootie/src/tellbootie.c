@@ -22,12 +22,13 @@
 #include <linux/reboot.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 int main(int argc, char *argv[])
 {
-	char *arg = NULL;
-	if (argc == 2) 
-		arg = argv[1];
-	reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, LINUX_REBOOT_CMD_RESTART2, arg);
+	chdir("/");
+	sync();
+	uint8_t data[] = { 0xf8, 0x27, 0x57, 0x35 };
+	reboot(LINUX_REBOOT_CMD_RESTART2, LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, data);
 	return 0;
 }
