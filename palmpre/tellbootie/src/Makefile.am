@@ -6,7 +6,7 @@ NULL =
 AM_CPPFLAGS = \
 	$(NULL)
 
-bin_PROGRAMS = tellbootie
+sbin_PROGRAMS = tellbootie
 
 tellbootie_SOURCES = \
 	tellbootie.c \
