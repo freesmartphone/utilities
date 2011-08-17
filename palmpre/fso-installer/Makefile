@@ -23,7 +23,7 @@
 # Configuration
 ###############################################################################
 
-# Select "pre", "preplus" or "pre2".
+# Select "pre", "preplus", "pre2" or "hpveer".
 TARGET = unknown
 # Define the size you want to let on your media partition of WebOS: 00.5G < X < 07.5G (15.5G for a pre2)
 # It NEEDS to be formated as XX.XG
@@ -39,10 +39,13 @@ WEBOS_DOCTOR_NAME = webosdoctor*.jar
 # !!! DO NOT MODIFY ANY OF THE FOLLOWING LINES !!!
 ###############################################################################
 DOWNLOADDIRECTORY = downloads
-SUPPORTEDDEVICES = pre preplus pre2
-ifeq ($(filter ${TARGET},${SUPPORTEDDEVICES}),)
+SUPPORTEDTARGETS = pre preplus pre2 hpveer
+ifeq ($(filter ${TARGET},${SUPPORTEDTARGETS}),)
 $(error You did not enter a proper TARGET)
 endif
+
+TIME_TO_WAIT_FOR_DEVICE = 10
+BOOT_PARTITION = ${BOOT_PARTITION}
 
 ifneq ($(shell echo ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}|wc -c),6)
 $(error Wrong CONFIG_WEBOS_MEDIA_TARGET_SIZE format!!)
@@ -81,6 +84,20 @@ KERNELFILENAME = uImage-palmpre2.bin
 DOWNLOAD_BASE_URL = ${ORIGIN_URL}/palmpre2
 ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '>' '15.5G'),1)
 $(error $(shell echo |awk '{print 16.0 - ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}}')G is left to FSO/SHR, It is too small .\
+ You need to decrease CONFIG_WEBOS_MEDIA_TARGET_SIZE)
+endif
+endif
+
+ifeq (${TARGET},hpveer)
+NOVAINSTALLER = nova-installer-image-broadway.uImage
+NOVA_IMAGE_NAME = nova-cust-image-broadway.rootfs.tar.gz
+IMAGEFILENAME = full-hpveer.tar.gz
+KERNELFILENAME = uImage-hpveer.bin
+DOWNLOAD_BASE_URL = ${ORIGIN_URL}/hpveer
+TIME_TO_WAIT_FOR_DEVICE = 15
+BOOT_PARTITION = /dev/mmcblk0p14
+ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '>' '07.5G'),1)
+$(error $(shell echo |awk '{print 8.0 - ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}}')G is left to FSO/SHR, It is too small .\
  You need to decrease CONFIG_WEBOS_MEDIA_TARGET_SIZE)
 endif
 endif
@@ -181,7 +198,7 @@ memboot: build/unpacked-doctor/webos/.unpacked recover
 	@echo "Transfer nova installer to device and reboot your device with it ..."
 	@novacom -w boot mem:// < build/unpacked-doctor/webos/${NOVAINSTALLER} 2> /dev/null || true
 	@echo "Wait for device to come back ..."
-	@sleep 10
+	@sleep ${TIME_TO_WAIT_FOR_DEVICE}
 
 .PHONY: reboot
 reboot:
@@ -231,9 +248,9 @@ mount: unmount lvm-setup
 	  novacom -w run file://bin/mkdir -- -p /tmp/$$f ; \
 	  novacom -w run file://bin/mount -- /dev/mapper/store-$$f /tmp/$$f -o ro ; \
 	done
-	@echo " Mounting /dev/mmcblk0p2"
+	@echo " Mounting ${BOOT_PARTITION}"
 	@novacom -w run file://bin/mkdir -- -p /tmp/boot
-	@novacom -w run file://bin/mount -- /dev/mmcblk0p2 /tmp/boot -o rw
+	@novacom -w run file://bin/mount -- ${BOOT_PARTITION} /tmp/boot -o rw
 
 .PHONY: unmount
 unmount:
@@ -242,8 +259,8 @@ unmount:
 	  echo " Unmounting /tmp/$$f" ; \
 	  ( novacom -w run file://bin/umount -- /tmp/$$f 2> /dev/null || true ) ; \
 	done
-	@echo " Unmounting /dev/mmcblk0p2"
-	@novacom -w run file://bin/umount -- /dev/mmcblk0p2 2> /dev/null || true
+	@echo " Unmounting ${BOOT_PARTITION}"
+	@novacom -w run file://bin/umount -- ${BOOT_PARTITION} 2> /dev/null || true
 
 .PHONY: unmount-fso
 unmount-fso:
@@ -315,10 +332,10 @@ install-patch: wget-patch
 .PHONY: install-bootr
 install-bootr: unmount wget-bootr install-patch
 	@echo "Installing Bootr to your device ..."
-	@novacom -w run file://bin/mount -- /dev/mmcblk0p2 /boot
+	@novacom -w run file://bin/mount -- ${BOOT_PARTITION} /boot
 	@novacom -w run file://bin/tar -- -xz -C /boot -f - < downloads/$(BOOTR)
 	@novacom -w run file://boot/bootr/bin/install.sh install
-	@novacom -w run file://bin/umount -- /dev/mmcblk0p2
+	@novacom -w run file://bin/umount -- ${BOOT_PARTITION}
 	@echo "Bootr installed!"
 
 .PHONY: restore-media
@@ -390,14 +407,14 @@ neuralyze-me: memboot
 	@novacom -w run file://usr/sbin/mkdosfs -- -F 32 /dev/mapper/store-media
 	@echo "lvm layout rearranged!"
 	@make --no-print-directory restore-media
-	@novacom -w run file://bin/mount -- /dev/mmcblk0p2 /boot
+	@novacom -w run file://bin/mount -- ${BOOT_PARTITION} /boot
 	@novacom -w run file://bin/rm -- -rf /boot/$(KERNELFILENAME)
 	@echo "Kernel removed!"
 	@novacom -w run file://boot/bootr/bin/install.sh uninstall
 	@novacom -w run file://bin/mount -- -o remount,rw /boot
 	@novacom -w run file://bin/rm -- -rf /boot/bootr/
 	@echo "Bootr removed!"
-	@novacom -w run file://bin/umount -- /dev/mmcblk0p2
+	@novacom -w run file://bin/umount -- ${BOOT_PARTITION}
 	@make --no-print-directory reboot
 
 
