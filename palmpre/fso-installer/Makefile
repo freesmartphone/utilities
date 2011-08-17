@@ -33,7 +33,10 @@ CONFIG_WEBOS_MEDIA_TARGET_SIZE = 05.5G
 # Base URL for downloading kernels and images
 ORIGIN_URL = http://build.shr-project.org/shr-unstable/images/
 # Name of your webos doctor file
-WEBOS_DOCTOR_NAME = webosdoctor*.jar
+# DOCTOR = webosdoctor*.jar
+
+# Select "wr", "sprint", "verizonwireless", "bellmo", "telcel", "att" or "wifi".
+CARRIER = wr
 
 ###############################################################################
 # !!! DO NOT MODIFY ANY OF THE FOLLOWING LINES !!!
@@ -60,6 +63,24 @@ ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '>' '07.5G'),1)
 $(error $(shell echo |awk '{print 8.0 - ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}}')G is left to FSO/SHR, It is too small .\
  You need to decrease CONFIG_WEBOS_MEDIA_TARGET_SIZE)
 endif
+CODENAME = castle
+ifeq (${CARRIER},wr)
+MODEL = p100ueu
+VERSION = 1.4.5
+endif
+ifeq (${CARRIER},sprint)
+MODEL = p100eww
+VERSION = 1.4.5
+endif
+ifeq (${CARRIER},bellmo)
+MODEL = p100eww
+VERSION = 1.4.5
+endif
+ifeq (${CARRIER},telcel)
+MODEL = p100eww
+VERSION = 1.4.0
+CARRIER_TARBALL = wr.tar
+endif
 endif
 
 ifeq (${TARGET},preplus)
@@ -67,18 +88,30 @@ ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '>' '15.5G'),1)
 $(error $(shell echo |awk '{print 8.0 - ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}}')G is left to FSO/SHR, It is too small .\
  You need to decrease CONFIG_WEBOS_MEDIA_TARGET_SIZE)
 endif
+CODENAME = castle
+ifeq (${CARRIER},wr)
+MODEL = p101ueu
+VERSION = 2.1.0
+CARRIER_TARBALL = wr-castle-plus.tar
+endif
+ifeq (${CARRIER},verizonwireless)
+MODEL = p101eww
+VERSION = 1.4.5.1
+CARRIER_TARBALL = verizon.tar
+endif
+ifeq (${CARRIER},att)
+MODEL = p101eww
+VERSION = 1.4.5
+endif
+
 endif
 
 #common stuff to both pre and preplus devices redefined if it is a pre2
-NOVAINSTALLER = nova-installer-image-castle.uImage
-NOVA_IMAGE_NAME = nova-cust-image-castle.rootfs.tar.gz
 IMAGEFILENAME = full-palmpre.tar.gz
 KERNELFILENAME = uImage-palmpre.bin
 DOWNLOAD_BASE_URL = "${ORIGIN_URL}/palmpre"
 
 ifeq (${TARGET},pre2)
-NOVAINSTALLER = nova-installer-image-roadrunner.uImage
-NOVA_IMAGE_NAME = nova-cust-image-roadrunner.rootfs.tar.gz
 IMAGEFILENAME = full-palmpre2.tar.gz
 KERNELFILENAME = uImage-palmpre2.bin
 DOWNLOAD_BASE_URL = ${ORIGIN_URL}/palmpre2
@@ -86,11 +119,27 @@ ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '>' '15.5G'),1)
 $(error $(shell echo |awk '{print 16.0 - ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}}')G is left to FSO/SHR, It is too small .\
  You need to decrease CONFIG_WEBOS_MEDIA_TARGET_SIZE)
 endif
+CODENAME = roadrunner
+ifeq (${CARRIER},wr)
+MODEL = p103ueuna
+VERSION = 2.1.0
+ifeq (${VERSION},2.0.1)
+MODEL = p102ueuna
+endif
+ifeq (${VERSION},2.0.0)
+MODEL = p103ueu
+endif
+endif
+ifeq (${CARRIER},verizonwireless)
+MODEL = p102eww
+VERSION = 2.0.1
+CARRIER_TARBALL = verizon.tar
+DOCTOR = webosdoctorp102${CARRIER}-${VERSION}.jar
+endif
+
 endif
 
 ifeq (${TARGET},hpveer)
-NOVAINSTALLER = nova-installer-image-broadway.uImage
-NOVA_IMAGE_NAME = nova-cust-image-broadway.rootfs.tar.gz
 IMAGEFILENAME = full-hpveer.tar.gz
 KERNELFILENAME = uImage-hpveer.bin
 DOWNLOAD_BASE_URL = ${ORIGIN_URL}/hpveer
@@ -100,7 +149,28 @@ ifeq ($(shell expr '${CONFIG_WEBOS_MEDIA_TARGET_SIZE}' '>' '07.5G'),1)
 $(error $(shell echo |awk '{print 8.0 - ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}}')G is left to FSO/SHR, It is too small .\
  You need to decrease CONFIG_WEBOS_MEDIA_TARGET_SIZE)
 endif
+CODENAME = broadway
+ifeq (${CARRIER},wr)
+MODEL = p160una
+VERSION = 2.1.1
 endif
+ifeq (${CARRIER},att)
+MODEL = p160una
+VERSION = 2.1.2
+endif
+endif
+
+ifndef DOCTOR
+DOCTOR = webosdoctor${MODEL}${CARRIER}-${VERSION}.jar
+ifeq (${CARRIER},wr)
+DOCTOR = webosdoctor${MODEL}-${CARRIER}-${VERSION}.jar
+endif
+ifeq (${CARRIER},wifi)
+DOCTOR = webosdoctor${MODEL}${CARRIER}-${VERSION}.jar
+endif
+endif
+
+PATIENT = ${TARGET}-${MODEL}-${CARRIER}-${VERSION}
 
 IMAGE ?= $(DOWNLOADDIRECTORY)/$(IMAGEFILENAME)
 KERNEL ?= $(DOWNLOADDIRECTORY)/$(KERNELFILENAME)
@@ -109,7 +179,8 @@ BOOTRURL = https://github.com/downloads/slyon/bootr/${BOOTR}
 # Base URL for downloading GNU patch
 PATCH_URL = http://ipkg.preware.org/feeds/webos-internals/armv7/
 PATCH_IPK = org.webosinternals.patch_2.5.9-4_armv7.ipk
-
+NOVAINSTALLER = nova-installer-image-${CODENAME}.uImage
+NOVA_IMAGE_NAME = nova-cust-image-${CODENAME}.rootfs.tar.gz
 
 ###############################################################################
 # General
@@ -131,25 +202,25 @@ clean:
 # webOS doctor unpack stuff
 ###############################################################################
 
-build/unpacked-doctor: downloads/$(WEBOS_DOCTOR_NAME)
-	@mkdir -p build/unpacked-doctor
+build/${PATIENT}: downloads/$(DOCTOR)
+	@mkdir -p build/${PATIENT}
 
-build/unpacked-doctor/resources/.unpacked: build/unpacked-doctor
+build/${PATIENT}/resources/.unpacked: build/${PATIENT}
 	@echo "Extract the webos doctor ..."
 	@if [ `which jar` ] ; then export unjar="jar -xf" ; elif [ `which unzip` ] ; then export unjar="unzip" ; fi ; \
 	if [ "$$unjar" = "" ] ; then echo "Not found any command to extract webos doctor. Please install the jar or unzip utility to proceed!" ; false ; \
-	else (cd build/unpacked-doctor; $$unjar ../../downloads/$(WEBOS_DOCTOR_NAME) > /dev/null || true ) ; fi
-	@(touch build/unpacked-doctor/resources/.unpacked)
+	else (cd build/${PATIENT}; $$unjar ../../downloads/$(DOCTOR) > /dev/null || true ) ; fi
+	@(touch build/${PATIENT}/resources/.unpacked)
 
-build/unpacked-doctor/webos/.unpacked: build/unpacked-doctor/resources/.unpacked
-	@(mkdir -p build/unpacked-doctor/webos)
-	@(tar xf build/unpacked-doctor/resources/webOS.tar -C build/unpacked-doctor/webos)
-	@(touch build/unpacked-doctor/webos/.unpacked)
+build/${PATIENT}/webos/.unpacked: build/${PATIENT}/resources/.unpacked
+	@(mkdir -p build/${PATIENT}/webos)
+	@(tar xf build/${PATIENT}/resources/webOS.tar -C build/${PATIENT}/webos)
+	@(touch build/${PATIENT}/webos/.unpacked)
 
-build/unpacked-doctor/rootfs/.unpacked: build/unpacked-doctor/webos/.unpacked
-	@(mkdir -p build/unpacked-doctor/rootfs ; \
-	  tar xzf build/unpacked-doctor/webos/$(NOVA_IMAGE_NAME) -C build/unpacked-doctor/rootfs 2> /dev/null) || true
-	@(touch build/unpacked-doctor/rootfs/.unpacked)
+build/${PATIENT}/rootfs/.unpacked: build/${PATIENT}/webos/.unpacked
+	@(mkdir -p build/${PATIENT}/rootfs ; \
+	  tar xzf build/${PATIENT}/webos/$(NOVA_IMAGE_NAME) -C build/${PATIENT}/rootfs 2> /dev/null) || true
+	@(touch build/${PATIENT}/rootfs/.unpacked)
 
 
 ###############################################################################
@@ -187,16 +258,16 @@ wget-stuff: wget-kernel wget-image wget-bootr wget-patch
 ###############################################################################
 
 .PHONY: memload
-memload: build/unpacked-doctor/webos/.unpacked
+memload: build/${PATIENT}/webos/.unpacked
 	@echo "Transfer nova installer to device and boot it ..."
-	@novacom boot mem:// < build/unpacked-doctor/webos/${NOVAINSTALLER}
+	@novacom boot mem:// < build/${PATIENT}/webos/${NOVAINSTALLER}
 	@echo "Wait for device to come back ..."
 	@sleep 10
 
 .PHONY: memboot 
-memboot: build/unpacked-doctor/webos/.unpacked recover
+memboot: build/${PATIENT}/webos/.unpacked recover
 	@echo "Transfer nova installer to device and reboot your device with it ..."
-	@novacom -w boot mem:// < build/unpacked-doctor/webos/${NOVAINSTALLER} 2> /dev/null || true
+	@novacom -w boot mem:// < build/${PATIENT}/webos/${NOVAINSTALLER} 2> /dev/null || true
 	@echo "Wait for device to come back ..."
 	@sleep ${TIME_TO_WAIT_FOR_DEVICE}
 
@@ -423,7 +494,7 @@ neuralyze-me: memboot
 ###############################################################################
 
 .PHONY: setup-extra
-setup-extra: build/unpacked-doctor/rootfs/.unpacked
+setup-extra: build/${PATIENT}/rootfs/.unpacked
 	@echo "Copying all extra files to extra directory ..."
 	@sh scripts/setup-extra.sh
 
