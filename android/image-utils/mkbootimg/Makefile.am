@@ -8,7 +8,7 @@ AM_CPPFLAGS = \
 -I$(top_builddir)/include \
 -I$(top_builddir)/mkbootimg
 
-bin_PROGRAMS = mkbootimg
+bin_PROGRAMS = mkbootimg unbootimg
 
 include_HEADERS = bootimg.h
 
@@ -18,3 +18,5 @@ mkbootimg.c
 mkbootimg_LDADD = $(top_builddir)/libmincrypt/libmincrypt.la
 mkbootimg_LDFLAGS =
 
+unbootimg_SOURCES = \
+unbootimg.c
