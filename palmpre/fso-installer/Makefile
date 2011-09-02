@@ -48,7 +48,7 @@ $(error You did not enter a proper TARGET)
 endif
 
 TIME_TO_WAIT_FOR_DEVICE = 10
-BOOT_PARTITION = ${BOOT_PARTITION}
+BOOT_PARTITION = /dev/mmcblk0p2
 
 ifneq ($(shell echo ${CONFIG_WEBOS_MEDIA_TARGET_SIZE}|wc -c),6)
 $(error Wrong CONFIG_WEBOS_MEDIA_TARGET_SIZE format!!)
