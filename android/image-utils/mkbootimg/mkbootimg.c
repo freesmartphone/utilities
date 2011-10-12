@@ -69,26 +69,22 @@ int usage(void)
     return 1;
 }
 
-
-
-static unsigned char padding[2048] = { 0, };
-
 int write_padding(int fd, unsigned pagesize, unsigned itemsize)
 {
     unsigned pagemask = pagesize - 1;
-    unsigned count;
+    unsigned int count = 0;
+    char byte = 0;
 
     if((itemsize & pagemask) == 0) {
         return 0;
     }
 
-    count = pagesize - (itemsize & pagemask);
-
-    if(write(fd, padding, count) != count) {
-        return -1;
-    } else {
-        return 0;
+    for (count = 0; count < (pagesize - (itemsize & pagemask)); count++) {
+        if (write(fd, &byte, 1) != 1)
+            return -1;
     }
+
+    return 0;
 }
 
 int main(int argc, char **argv)
