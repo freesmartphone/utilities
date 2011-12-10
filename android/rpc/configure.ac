@@ -10,17 +10,15 @@ AC_STDC_HEADERS
 AC_PROG_LIBTOOL
 AC_LIBTOOL_DLOPEN
 
-VALA_REQUIRED=0.8.1.1
+VALA_REQUIRED=0.12
 AC_PATH_PROG(VALAC, valac, valac)
 AC_SUBST(VALAC)
 m4_ifdef([AM_PROG_VALAC], [AM_PROG_VALAC([$VALA_REQUIRED])])
 
 ##############################################################################
 # required versions
-GLIB_REQUIRED=2.18.0
+GLIB_REQUIRED=2.28.0
 GEE_REQUIRED=0.5.0
-DBUS_REQUIRED=1.2.1
-DBUS_GLIB_REQUIRED=0.76
 FSO_GLIB_REQUIRED=2010.05.11.2
 FSO_FRAMEWORK_REQUIRED=0.2.4
 FSO_RESOURCE_REQUIRED=0.1.0
@@ -34,14 +32,6 @@ PKG_CHECK_MODULES(GLIB,
   gee-1.0 >= $GEE_REQUIRED)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
-
-##############################################################################
-# dbus and dbus-glib
-PKG_CHECK_MODULES(DBUS,
-  dbus-1 >= $DBUS_REQUIRED
-  dbus-glib-1 >= $DBUS_GLIB_REQUIRED)
-AC_SUBST(DBUS_CFLAGS)
-AC_SUBST(DBUS_LIBS)
 
 ##############################################################################
 # dbus conf directory

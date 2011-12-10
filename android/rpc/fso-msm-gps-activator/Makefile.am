@@ -5,7 +5,7 @@ NULL =
 VALAC_ARGS = \
 	--basedir $(top_srcdir) \
 	--vapidir ../vapi \
-	--pkg dbus-glib-1 \
+	--pkg gio-2.0 \
 	--save-temps
 
 if WANT_DEBUG

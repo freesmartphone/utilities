@@ -1,5 +1,5 @@
 /*
-   Copyright 2010 Michael 'Mickey' Lauer
+   Copyright 2010-2011 Michael 'Mickey' Lauer
    Copyright 2010 Denis 'GNUtoo' Carikli
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +14,8 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+
+using GLib;
 
 extern void gps_query_setup();
 extern void gps_query_iteration();
@@ -42,11 +44,11 @@ public class GPS : Object {
 
         if ( on )
         {
-            timeoutWatch = GLib.Timeout.add_seconds( 3, onTimeout );
+            timeoutWatch = Timeout.add_seconds( 3, onTimeout );
         }
         else
         {
-            GLib.Source.remove( timeoutWatch ); timeoutWatch = 0;
+            Source.remove( timeoutWatch ); timeoutWatch = 0;
             //gps_query_shutdown(); //makes the phone crash
         }
     }
@@ -59,59 +61,48 @@ public class GPS : Object {
 
 }
 
-
-
-
 [DBus (name = "org.freesmartphone.Usage")]
-public interface FsoUsage : Object {
-
-public abstract void RegisterResource(string name, DBus.ObjectPath path) throws DBus.Error;
-public abstract void UnregisterResource(string name) throws DBus.Error;
+public interface FsoUsageSync : Object
+{
+    public abstract void RegisterResource( string name, ObjectPath path ) throws GLib.Error;
+    public abstract void UnregisterResource( string name ) throws GLib.Error;
 }
 
 [DBus (name = "org.freesmartphone.Resource")]
-public class FsoResource : Object {
+public class FsoResource : Object
+{
 	private GPS gps = new GPS();
 
-        public void Enable() throws DBus.Error
+    public void Enable() throws GLib.Error
 	{ 
-		stderr.printf("Enabling GPS\n");
-		gps.start_stop_gps(true);
+		stderr.printf( "Enabling GPS\n" );
+		gps.start_stop_gps( true );
 	}
 	
-	public void Disable()throws DBus.Error 
+	public void Disable() throws GLib.Error 
 	{
-		stderr.printf("Disabling GPS\n");
-		gps.start_stop_gps(false);
+		stderr.printf( "Disabling GPS\n" );
+		gps.start_stop_gps( false );
 	}
 }
 
-
-
-
-
-void main() {
-    try {
-        var conn = DBus.Bus.get(DBus.BusType.SYSTEM);
-
-
-        dynamic DBus.Object bus = conn.get_object("org.freedesktop.DBus",
-                                                  "/org/freedesktop/DBus",
-                                                  "org.freedesktop.DBus");
-        // try to register service in session bus
-        uint reply = bus.request_name("org.freesmartphone.ousaged", (uint) 0);
-
-        var fsoUsage = (FsoUsage) conn.get_object ("org.freesmartphone.ousaged" , "/org/freesmartphone/Usage");
-        DBus.ObjectPath path = new DBus.ObjectPath("/org/freesmartphone/Resource/GPS");
+void main()
+{
+    try
+    {
+        var fsoUsage = Bus.get_proxy_sync<FsoUsageSync>( BusType.SYSTEM, "org.freesmartphone.ousaged", "/org/freesmartphone/Usage" );        
+        var path = new ObjectPath( "/org/freesmartphone/Resource/GPS" );
    
         var fsoService = new FsoResource();
-
-        conn.register_object("/org/freesmartphone/Resource/GPS",fsoService);
-        fsoUsage.RegisterResource("GPS",path);
+        var conn = Bus.get_sync( BusType.SYSTEM );
+        conn.register_object( "/org/freesmartphone/Resource/GPS", fsoService );
+        fsoUsage.RegisterResource( "GPS", path );
 
         // start main loop
         new MainLoop().run();
-    } catch (DBus.Error e) {
-        stderr.printf("Error: %s\n", e.message);
+    }
+    catch ( GLib.Error e )
+    {
+        stderr.printf( "Error: %s\n", e.message );
     }
 }
