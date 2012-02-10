@@ -235,17 +235,17 @@ wget-kernel: downloads
 	@echo "Downloading kernel for your device ..."
 	wget -N --directory-prefix=downloads/ ${DOWNLOAD_BASE_URL}/$(KERNELFILENAME)
 
-.PHONY: wget-kernel
+.PHONY: wget-image
 wget-image: downloads
 	@echo "Downloading image for your device ..."
 	wget -N --directory-prefix=downloads/ ${DOWNLOAD_BASE_URL}/$(IMAGEFILENAME)
 
-PHONY: wget-bootr
+.PHONY: wget-bootr
 wget-bootr: downloads
 	@echo "Downloading Bootr for your device ..."
 	wget --no-check-certificate -N --directory-prefix=downloads/ $(BOOTRURL)
 
-PHONY: wget-patch
+.PHONY: wget-patch
 wget-patch: downloads
 	@echo "Downloading GNU Patch for your device ..."
 	wget -N --directory-prefix=downloads/ ${PATCH_URL}/$(PATCH_IPK)
