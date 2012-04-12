@@ -32,7 +32,7 @@
 #    include <netdb.h>
 #  endif
 #else
-#  include <sys/reboot.h>
+#  include <linux/reboot.h>
 #endif
 
 typedef struct stinfo stinfo;
@@ -197,7 +197,7 @@ void reboot_service(int fd, void *arg)
         /* wait until vdc succeeds or fails */
         waitpid(pid, &ret, 0);
     }
-    ret = __reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2,
+    ret = reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2,
                    LINUX_REBOOT_CMD_RESTART2, (char *)arg);
     if (ret < 0) {
         snprintf(buf, sizeof(buf), "reboot failed: %s\n", strerror(errno));
