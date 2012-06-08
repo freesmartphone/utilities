@@ -6,6 +6,13 @@ MainLoop loop;
 IOChannel channel;
 CmtSpeech.Connection connection;
 FreeSmartphone.GSM.Call gsmcallproxy;
+DataOutputStream output;
+
+struct Buffer {
+    public uint8[] content;
+    public long length;
+}
+
 
 //===========================================================================
 public static void onCallStatusSignal( int id, FreeSmartphone.GSM.CallStatus status, GLib.HashTable<string,GLib.Variant> properties )
@@ -36,6 +43,8 @@ public static void handleDataEvent()
 
     CmtSpeech.FrameBuffer dlbuf = null;
     CmtSpeech.FrameBuffer ulbuf = null;
+    Buffer buffer = Buffer();
+    long written = 0;
 
     var ok = connection.dl_buffer_acquire( out dlbuf );
     if ( ok == 0 )
@@ -48,11 +57,24 @@ public static void handleDataEvent()
             if ( ulbuf.pcount == dlbuf.pcount )
             {
                 debug( "looping DL packet to UL with %u payload bytes", dlbuf.pcount );
-                Memory.copy( ulbuf.payload, dlbuf.payload, dlbuf.pcount );
+				buffer.content  = new uint8[dlbuf.pcount];
+				buffer.length = dlbuf.pcount;
+                Memory.copy( buffer.content, dlbuf.payload, dlbuf.pcount );
             }
             connection.ul_buffer_release( ulbuf );
         }
         connection.dl_buffer_release( dlbuf );
+
+        while (written < buffer.length ) {
+            try
+            {
+                written += output.write (buffer.content[written:buffer.length]);
+            }
+            catch (GLib.IOError e)
+            {
+                error( @"Could not write to file: $(e.message)" );
+            }
+        }
     }
 }
 
@@ -167,6 +189,25 @@ public static void main( string[] argv )
 {
     Posix.signal( Posix.SIGINT, SIGINT_handler );
 
+    var file = File.new_for_path ("/home/root/out.wav");
+    if (file.query_exists ()) {
+        try
+        {
+            file.delete ();
+        }
+        catch (GLib.Error e)
+        {
+            error( @"Could not delete existing file: $(e.message)" );
+        }
+    }
+    try
+    {
+        output = new DataOutputStream (file.create (FileCreateFlags.REPLACE_DESTINATION));
+    }
+    catch (GLib.Error e)
+    {
+         error( @"Could not create file: $(e.message)" );
+    }
     debug( "initializing cmtspeed" );
     CmtSpeech.init();
 
