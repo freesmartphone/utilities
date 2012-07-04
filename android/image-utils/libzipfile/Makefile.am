@@ -17,9 +17,11 @@ private.h \
 centraldir.c \
 zipfile.c
 
-libzipfile_la_CFLAGS = 
-libzipfile_la_LIBADD = 
-libzipfile_la_LDFLAGS = 
+libzipfile_la_CFLAGS =
+libzipfile_la_LIBADD =
+libzipfile_la_LDFLAGS =
 
 docdir = $(datadir)/doc/zipfile
 doc_DATA = NOTICE
+
+EXTRA_DIST = NOTICE

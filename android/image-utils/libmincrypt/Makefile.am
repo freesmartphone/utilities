@@ -22,3 +22,5 @@ libmincrypt_la_LDFLAGS =
 
 docdir = $(datadir)/doc/mincrypt
 doc_DATA = NOTICE
+
+EXTRA_DIST = NOTICE

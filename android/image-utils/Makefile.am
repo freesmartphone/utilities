@@ -1,4 +1,12 @@
-SUBDIRS = libmincrypt libzipfile mkbootimg fastboot
+NULL =
+
+SUBDIRS = \
+	include \
+	libmincrypt \
+	libzipfile \
+	mkbootimg \
+	fastboot \
+	$(NULL)
 
 MAINTAINERCLEANFILES = Makefile.in aclocal.m4 config.guess \
                        config.h.in config.sub configure install-sh \

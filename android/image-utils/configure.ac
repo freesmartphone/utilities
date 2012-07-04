@@ -24,6 +24,7 @@ AC_CHECK_HEADER(
 # output stuff
 AC_CONFIG_FILES([
 Makefile
+include/Makefile
 fastboot/Makefile
 mkbootimg/Makefile
 libmincrypt/Makefile
