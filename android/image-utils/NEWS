@@ -1,0 +1,5 @@
+Initial release of android-image-utils 0.1
+=================================================
+
+Major changes:
+* Move to automake-based build infrastructure

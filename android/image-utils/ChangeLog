@@ -1,0 +1,36 @@
+2012-07-04  Simon Busch  <morphis@gravedo.de>
+
+	android: image-utils: get packaging bits right so we're ready for distribution
+
+	android: image-utils: rename to android-image-utils
+
+2011-10-12  Simon Busch  <morphis@gravedo.de>
+
+	android: mkbootimg: fixup padding so we can deal with a pagesize higher than 2048
+
+2011-10-05  Simon Busch  <morphis@gravedo.de>
+
+	android: mkbootimg: add --pagesize command line argument
+
+2011-08-26  Bob Ham  <rah@bash.sh>
+
+	Add a utility, unbootimg (v3)
+	This program is the complement to mkbootimg.  It prints header
+	information and extracts kernel, ramdisk and 2nd boot images.
+
+	The second version was absent trailing whitespace, as per comments
+	from GNUtoo.  This third version includes two changes: correcting
+	the file name at the top of unbootimg.c and also changing the text
+	"image size" to "total image size" in the header printing.  It
+	also includes the S-o-b line below, also as per comments from
+	GNUtoo.
+
+2010-03-14  Michael 'Mickey' Lauer  <mickey@vanille-media.de>
+
+	android: add more missing files
+
+	android: add missing Makefile.am
+
+2010-03-07  Thomas Zimmermann  <ml@vdm-design.de>
+
+	android: add new build of image-utils; this time including fastboot

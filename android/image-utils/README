@@ -1,20 +1,14 @@
+=========================================================================================
+Android image utils
+=========================================================================================
 
-The system/ directory is intended for pieces of the world that are the
-core of the embedded linux platform at the heart of Android.  These
-essential bits are required for basic booting, operation, and debugging.
+This are some of the android image utils with an automake environment. It's synchronized
+from time to time with the upstream sources from the Android Open Source Project.
 
-They should not depend on libraries outside of system/... (some of them
-do currently -- they need to be updated or changed) and they should not
-be required for the simulator build.
+The following utilities are included:
+- fastboot
+- mkbootimg
+- unbootimg
 
-The license for all these pieces should be clean (Apache2, BSD, or MIT).
-
-Currently system/bluetooth/... and system/extra/... have some pieces
-with GPL/LGPL licensed code.
-
-Assorted Issues:
-
-- pppd depends on libutils for logging
-- pppd depends on libcrypt/libcrypto
-- init, linker, debuggerd, toolbox, usbd depend on libcutils
-- should probably rename bionic to libc
+To successfully build the sources you need the following dependencies:
+- zlib
