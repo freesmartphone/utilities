@@ -10,7 +10,8 @@ AM_CPPFLAGS = \
 
 bin_PROGRAMS = fastboot
 
-include_HEADERS = fastboot.h usb.h
+fastbootincludedir = $(includedir)/fastboot/
+fastbootinclude_HEADERS = fastboot.h usb.h
 
 fastboot_SOURCES = \
 bootimg.c \
