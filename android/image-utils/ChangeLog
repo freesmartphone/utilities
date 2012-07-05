@@ -1,4 +1,10 @@
+2012-07-05  Simon Busch  <morphis@gravedo.de>
+
+	android: image: install headers into own sub directory
+
 2012-07-04  Simon Busch  <morphis@gravedo.de>
+
+	android: image-utils: update documentation bits
 
 	android: image-utils: get packaging bits right so we're ready for distribution
 

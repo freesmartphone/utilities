@@ -1,5 +1,5 @@
 AC_PREREQ(2.53)
-AC_INIT(android-image-utils, 0.1, http://source.android.com/)
+AC_INIT(android-image-utils, 0.1.1, http://source.android.com/)
 AM_INIT_AUTOMAKE()
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
