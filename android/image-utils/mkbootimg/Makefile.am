@@ -13,10 +13,10 @@ bin_PROGRAMS = mkbootimg unbootimg
 include_HEADERS = bootimg.h
 
 mkbootimg_SOURCES = \
-mkbootimg.c 
-
+mkbootimg.c
 mkbootimg_LDADD = $(top_builddir)/libmincrypt/libmincrypt.la
-mkbootimg_LDFLAGS =
+mkbootimg_LDFLAGS = -static
 
 unbootimg_SOURCES = \
 unbootimg.c
+

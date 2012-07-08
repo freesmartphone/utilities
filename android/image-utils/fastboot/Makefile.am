@@ -24,6 +24,6 @@ usb_linux.c \
 util_linux.c
 
 fastboot_LDADD = $(top_builddir)/libmincrypt/libmincrypt.la \
-                 $(top_builddir)/libzipfile/libzipfile.la 
-fastboot_LDFLAGS =
+                 $(top_builddir)/libzipfile/libzipfile.la
+fastboot_LDFLAGS = -static
 
