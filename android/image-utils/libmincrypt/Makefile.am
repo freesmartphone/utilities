@@ -10,7 +10,7 @@ AM_CPPFLAGS = \
 -I$(top_srcdir)/include \
 -I$(top_builddir)/include
 
-lib_LTLIBRARIES = libmincrypt.la
+noinst_LTLIBRARIES = libmincrypt.la
 
 libmincrypt_la_SOURCES = \
 rsa.c \
@@ -19,8 +19,5 @@ sha.c
 libmincrypt_la_CFLAGS =
 libmincrypt_la_LIBADD = 
 libmincrypt_la_LDFLAGS = 
-
-docdir = $(datadir)/doc/mincrypt
-doc_DATA = NOTICE
 
 EXTRA_DIST = NOTICE

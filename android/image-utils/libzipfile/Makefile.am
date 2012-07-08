@@ -10,7 +10,7 @@ AM_CPPFLAGS = \
 -I$(top_srcdir)/include \
 -I$(top_builddir)/include
 
-lib_LTLIBRARIES = libzipfile.la
+noinst_LTLIBRARIES = libzipfile.la
 
 libzipfile_la_SOURCES = \
 private.h \
@@ -20,8 +20,5 @@ zipfile.c
 libzipfile_la_CFLAGS =
 libzipfile_la_LIBADD =
 libzipfile_la_LDFLAGS =
-
-docdir = $(datadir)/doc/zipfile
-doc_DATA = NOTICE
 
 EXTRA_DIST = NOTICE
