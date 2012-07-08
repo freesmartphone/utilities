@@ -1,4 +1,12 @@
+2012-07-08  Simon Busch  <morphis@gravedo.de>
+
+	android: image-utils: don't install libzipfile and libmincrypt libraries
+
+	android: image-utils: use static linking
+
 2012-07-05  Simon Busch  <morphis@gravedo.de>
+
+	android: image-utils: prepare for next release 0.1.1
 
 	android: image: install headers into own sub directory
 
