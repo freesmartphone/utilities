@@ -1,5 +1,5 @@
 AC_PREREQ(2.53)
-AC_INIT(brcm_patchram_plus, 0.1.0, http://source.android.com/)
+AC_INIT(brcm_patchram_plus, 4.1.1, http://source.android.com/)
 AM_INIT_AUTOMAKE()
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
