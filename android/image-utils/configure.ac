@@ -29,6 +29,7 @@ fastboot/Makefile
 mkbootimg/Makefile
 libmincrypt/Makefile
 libzipfile/Makefile
+ext4_utils/Makefile
 ])
 
 AC_OUTPUT

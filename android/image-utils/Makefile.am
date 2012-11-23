@@ -6,6 +6,7 @@ SUBDIRS = \
 	libzipfile \
 	mkbootimg \
 	fastboot \
+	ext4_utils \
 	$(NULL)
 
 MAINTAINERCLEANFILES = Makefile.in aclocal.m4 config.guess \
